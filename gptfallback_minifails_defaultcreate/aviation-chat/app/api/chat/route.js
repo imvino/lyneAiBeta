@@ -233,7 +233,7 @@ export async function POST(req) {
     const kbResult = await performAzureSearch(userMessage);
 // Debug log: show Azure Search result & score
     if (kbResult.content) {
-     console.log(`🔎 Azure Search result (score: ${kbResult.score.toFixed(2)}): "${kbResult.content.slice(0, 80)}..."`);
+     console.log(`🔎 Azure Search result score: ${kbResult.score.toFixed(2)}`);
   } else {
      console.log("🔎 Azure Search returned no content");
   }
@@ -271,7 +271,6 @@ if (kbResult.content && kbResult.score > 20) {
 - Take the raw GPT-4 factual answer.
 - Keep the natural text explanation exactly (or correct if unsafe).
 - Extract structured parameters, extract dimension data from azure search or gpt-4 in 'meters' always.
-- Give output in json format.
 - ALWAYS RETURN FULL JSON OUTPUT.
 
 Always return JSON output following this schema:
@@ -358,13 +357,15 @@ Always return JSON output following this schema:
 
 RULES:
 - Aircraft dimensions must remain within published ranges.
+- JSON should always reflect the applied changes, not just the explanation text.
 - For categorical fields (like tdpcColor, markingColor, markerColor, lightColor):
   * Always update them if the user explicitly requests a change.
-  * If the requested value is outside allowed options, replace with the nearest valid one and explain in "text".
+  * If the requested value is outside allowed options,  JSON gets the nearest valid value, and the "text" explanation mentions the substitution.
 - When the user requests **new layers**, create full valid JSON with new layer names.
 - When the user requests **updates**, change only the required fields in the particular layerName.
 - Always use aircraft name along with layer name if mentioned by user or take from raw answer (Eg:TLOF_JobyS4) or if nothing found give 'layername_series' (Eg:TLOF_001 or FATO_001).
-- Never return FAA advisory text, long documents, or irrelevant data. Always return valid JSON.`;
+- If the user says "landing surface", always map it to **TLOF** only & if "geometry", always map it to **FATO** only.
+`;
 
       const filtered = await azureMini.chat.completions.create({
         model: process.env.AZURE_OPENAI_DEPLOYMENT_MINI,
@@ -394,34 +395,130 @@ RULES:
     }
 
     // Step 4: Merge AI updates into existing JSON safely
-    let updatedJson = { ...existingJson };
-    const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPES"];
+    const updatedJson = mergeUpdates(existingJson, data, userMessage);
 
-    for (const layerKey of possibleLayers) {
-      if (data[layerKey]) {
-        if (!Array.isArray(updatedJson[layerKey])) updatedJson[layerKey] = [];
+function mergeUpdates(existingJson, data, userMessage) {
+  let updatedJson = existingJson || {};
+  const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPES"];
+  let layerUpdates = {};
 
-        data[layerKey].forEach(updateObj => {
-          const targetLayerName = updateObj.dimensions?.layerName || null;
-          if (!targetLayerName) return;
+  // --- Normalize layer names (remove spaces/underscores, lowercase) ---
+  function normalizeName(name) {
+    return (name || "").toString().toLowerCase().replace(/[\s_]+/g, "");
+  }
 
-          const idx = updatedJson[layerKey].findIndex(
-            item => item.dimensions?.layerName === targetLayerName
-          );
-
-          if (idx !== -1) {
-            // Update existing layer
-            updatedJson[layerKey][idx] = {
-              ...updatedJson[layerKey][idx],
-              dimensions: { ...updatedJson[layerKey][idx].dimensions, ...updateObj.dimensions },
-            };
-          } else {
-            // Create new layer
-            updatedJson[layerKey].push(updateObj);
-          }
-        });
-      }
+  // --- Detect intent from user message ---
+  function detectIntent(msg) {
+    msg = msg.toLowerCase();
+    if (msg.includes("create") || msg.includes("add") || msg.includes("new") || msg.includes("another") || msg.includes("make")) {
+      return "create";
     }
+    if (msg.includes("update") || msg.includes("change") || msg.includes("modify") || msg.includes("set") || msg.includes("give")) {
+      return "update";
+    }
+    return "unknown";
+  }
+  const intent = detectIntent(userMessage);
+
+  // --- Helper: find next available ID ---
+  function getNextLayerName(layerType) {
+    const existing = updatedJson[layerType] || [];
+    let maxId = 0;
+
+    existing.forEach(item => {
+      const name = item.dimensions?.layerName || "";
+      const match = name.match(new RegExp(`^${layerType}_(\\d+)$`));
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxId) maxId = num;
+      }
+    });
+
+    const nextId = (maxId + 1).toString().padStart(3, "0");
+    return `${layerType}_${nextId}`;
+  }
+
+  // Collect updates for multiple layers
+  for (const key of possibleLayers) {
+    if (data[key]) layerUpdates[key] = data[key];
+  }
+
+  if (Object.keys(layerUpdates).length > 0) {
+    // Apply updates per layer
+    for (const [layerType, updates] of Object.entries(layerUpdates)) {
+      if (!Array.isArray(updatedJson[layerType])) updatedJson[layerType] = [];
+
+      updates.forEach(updateObj => {
+        let targetLayerName = updateObj.dimensions?.layerName || null;
+
+        if (targetLayerName) {
+          // Normalize layer name for matching
+          targetLayerName = normalizeName(targetLayerName);
+        }
+
+        // --- Try to find existing layer (normalized) ---
+        const idx = updatedJson[layerType].findIndex(
+          item => normalizeName(item.dimensions?.layerName) === targetLayerName
+        );
+
+        if (idx !== -1 && intent === "update") {
+          // Update existing layer
+          updatedJson[layerType][idx] = {
+            ...updatedJson[layerType][idx],
+            dimensions: {
+              ...updatedJson[layerType][idx].dimensions,
+              ...updateObj.dimensions,
+            },
+          };
+          console.log(`🔄 Updated layer: ${updatedJson[layerType][idx].dimensions.layerName}`);
+        } else {
+          // Create new layer if not found or intent=create
+          const newName = updateObj.dimensions?.layerName
+            ? updateObj.dimensions.layerName
+            : getNextLayerName(layerType);
+
+          // Prevent exact duplicate creation
+          if (!updatedJson[layerType].some(item => normalizeName(item.dimensions?.layerName) === normalizeName(newName))) {
+            updatedJson[layerType].push({
+              position: updateObj.position || [-73.7855, 40.645],
+              isVisible: updateObj.isVisible ?? true,
+              dimensions: { ...updateObj.dimensions, layerName: newName },
+            });
+            console.log(`✨ Created new layer: ${newName}`);
+          }
+        }
+      });
+    }
+  } else {
+    // Single layer update fallback
+    const { layer, layerName, ...fields } = data;
+    const targetLayer = layer || "TLOF";
+
+    if (!Array.isArray(updatedJson[targetLayer])) updatedJson[targetLayer] = [];
+
+    const idx = updatedJson[targetLayer].findIndex(
+      item => normalizeName(item.dimensions?.layerName) === normalizeName(layerName)
+    );
+
+    if (idx !== -1 && intent === "update") {
+      updatedJson[targetLayer][idx] = {
+        ...updatedJson[targetLayer][idx],
+        dimensions: { ...updatedJson[targetLayer][idx].dimensions, ...fields },
+      };
+      console.log(`🔄 Updated layer: ${layerName}`);
+    } else {
+      const newName = layerName || getNextLayerName(targetLayer);
+      updatedJson[targetLayer].push({
+        position: [-73.7855, 40.645],
+        isVisible: true,
+        dimensions: { layerName: newName, ...fields },
+      });
+      console.log(`✨ Created new layer: ${newName}`);
+    }
+  }
+
+  return updatedJson;
+}
 
     // Final output
     console.log("🟢 User asked:", userMessage);
