@@ -1,0 +1,33 @@
+{
+  "name": "FATO",
+  "description": "FATO output template (wrapped with text + data)",
+  "content": {
+    "text": "<short natural explanation>",
+    "data": {
+      "FATO": [
+        {
+          "position": [0, 0],
+          "isVisible": true,
+          "dimensions": {
+            "sides": 6,
+            "diameter": 30,
+            "width": 30,
+            "length": 30,
+            "thickness": 0.5,
+            "rotation": 0,
+            "transparency": 1,
+            "baseHeight": 0,
+            "layerName": "FATO_{{aircraft}}",
+            "textureScaleU": 1,
+            "textureScaleV": 1,
+            "lightColor": "white",
+            "lightScale": 1,
+            "lightDistance": 1,
+            "lightRadius": 0.3,
+            "lightHeight": 0.3
+          }
+        }
+      ]
+    }
+  }
+}
