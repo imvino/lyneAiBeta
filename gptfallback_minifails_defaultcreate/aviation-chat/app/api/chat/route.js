@@ -361,8 +361,7 @@ RULES:
   - In "text", explain the corrected values only in short words.
   - In "data", set corrected safe values.
 - When the user requests **new layers**, create full valid JSON with new layer names.
-- When the user requests **updates**, change only the required fields in the particular layerName.
-- Always use aircraft name along with layer name if mentioned by user or take from raw answer (Eg:TLOF_JobyS4) or if nothing found give 'layername_series' (Eg:TLOF_001 or FATO_001).
+- When the user requests **updates**, change only the required fields in the particular layerName and return full layer output.
 - If the user says "landing surface", always map it to **TLOF** only & if "geometry", always map it to **FATO** only.
 `;
 
