@@ -1,0 +1,60 @@
+{
+  "name": "TLOF",
+  "description": "TLOF output template (wrapped with text + data)",
+  "content": {
+    "text": "<short natural explanation>",
+    "data": {
+      "TLOF": [
+        {
+          "position": [0, 0],
+          "isVisible": true,
+          "dimensions": {
+            "layerName": "TLOF_{{aircraft}}",
+            "sides": 4,
+            "diameter": 30,
+            "width": 30,
+            "length": 30,
+            "thickness": 0.5,
+            "rotation": 0,
+            "transparency": 1,
+            "baseHeight": 0,
+            "textureScaleU": 1,
+            "textureScaleV": 1,
+            "markingType": "dashed",
+            "markingColor": "white",
+            "markingThickness": 0.5,
+            "dashDistance": 1,
+            "dashLength": 1,
+            "landingMarker": "H",
+            "markerScale": 5,
+            "markerThickness": 0.5,
+            "letterThickness": 0.5,
+            "markerRotation": 0,
+            "markerColor": "blue",
+            "tdpcType": "Circle",
+            "tdpcScale": 5,
+            "tdpcThickness": 0.5,
+            "tdpcExtrusion": 0.02,
+            "tdpcRotation": 0,
+            "tdpcColor": "white",
+            "lightColor": "white",
+            "lightScale": 1,
+            "lightDistance": 1,
+            "lightRadius": 0.3,
+            "lightHeight": 0.2,
+            "safetyAreaType": "multiplier",
+            "offsetDistance": 3,
+            "dValue": 10,
+            "multiplier": 1.5,
+            "curveAngle": 45,
+            "safetyNetHeight": 15,
+            "safetyNetTransparency": 0.5,
+            "safetyNetScaleU": 1,
+            "safetyNetScaleV": 1,
+            "safetyNetColor": "white"
+          }
+        }
+      ]
+    }
+  }
+}
