@@ -1,0 +1,34 @@
+{
+  "name": "FATO",
+  "description": "FATO output template (wrapped with text + data)",
+  "content": {
+    "text": "<short natural explanation>",
+    "data": {
+      "FATO": [
+        {
+          "position": [0, 0],
+          "isVisible": true,
+          "dimensions": {
+            "sides": "(integer, Range: 3-12, Default: 6)",
+            "testSides": "(integer, Range: 3-20, Default: 10)",
+            "diameter": "(number, Range: 10-200, Default: 30)",
+            "width": "(number, Range: 0.1-100, Default: 30)",
+            "length": "(number, Range: 0.1-100, Default: 30)",
+            "thickness": "(number, Range: 0.01-1.0, Default: 0.5)",
+            "rotation": "(number, Range: 0-360, Default: 0)",
+            "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
+            "baseHeight": "(number, Range: -10-50, Default: 0)",
+            "layerName": "(string, Must be unique per session. Default: 'FATO_Unknown')",
+            "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
+            "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
+            "lightColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
+            "lightScale": "(number, Range: 0.1-10, Default: 1)",
+            "lightDistance": "(number, Range: 0.1-50, Default: 1)",
+            "lightRadius": "(number, Range: 0.1-5, Default: 0.3)",
+            "lightHeight": "(number, Range: 0.1-10, Default: 0.3)"
+          }
+        }
+      ]
+    }
+  }
+}

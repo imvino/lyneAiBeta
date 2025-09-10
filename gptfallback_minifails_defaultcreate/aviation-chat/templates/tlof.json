@@ -1,0 +1,60 @@
+{
+  "name": "TLOF",
+  "description": "TLOF output template (wrapped with text + data)",
+  "content": {
+    "text": "<short natural explanation>",
+    "data": {
+      "TLOF": [
+        {
+          "position": [0, 0],
+          "isVisible": true,
+          "dimensions": {
+            "layerName": "(string, Must be unique per session. Default: 'TLOF_Unknown')",
+            "sides": "(integer, Range: 3-12, Default: 4)",
+            "testSides": "(integer, Range: 3-12, Default: 4)",
+            "width": "(number, Range: 0.1-100, Default: 30)",
+            "length": "(number, Range: 0.1-100, Default: 30)",
+            "thickness": "(number, Range: 0.01-1.0, Default: 0.5)",
+            "rotation": "(number, Range: 0-360, Default: 0)",
+            "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
+            "baseHeight": "(number, Range: 0-10, Default: 0)",
+            "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
+            "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
+            "markingType": "(string, Options: 'solid', 'dashed'. Default: 'dashed')",
+            "markingColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
+            "markingThickness": "(number, Range: 0.2-1.0, Default: 0.5)",
+            "dashDistance": "(number, Range: 0.5-3.0, Default: 1)",
+            "dashLength": "(number, Range: 0.5-3.0, Default: 1)",
+            "landingMarker": "(string, Single char: 'H' or 'V'. Default: 'H')",
+            "markerScale": "(number, Range: 0.1-20, Default: 5)",
+            "markerThickness": "(number, Range: 0.2-1.0, Default: 0.5)",
+            "letterThickness": "(number, Range: 0.2-1.0, Default: 0.5)",
+            "markerRotation": "(number, Range: 0-360, Default: 0)",
+            "markerColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'blue')",
+            "tdpcType": "(string, Options: 'Circle', 'Cross', 'Square'. Default: 'Circle')",
+            "tdpcScale": "(number, Range: 0.1-20, Default: 5)",
+            "tdpcThickness": "(number, Range: 0.01-1.0, Default: 0.5)",
+            "tdpcExtrusion": "(number, Range: 0.0-1.0, Default: 0.02)",
+            "tdpcRotation": "(number, Range: 0-360, Default: 0)",
+            "tdpcColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
+            "lightColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
+            "lightScale": "(number, Range: 0.1-5, Default: 1)",
+            "lightDistance": "(number, Range: 0.1-10, Default: 1)",
+            "lightRadius": "(number, Range: 0.1-5, Default: 0.3)",
+            "lightHeight": "(number, Range: 0.1-5, Default: 0.2)",
+            "safetyAreaType": "(string, Options: 'multiplier', 'offset'. Default: 'multiplier')",
+            "offsetDistance": "(number, Range: 0.1-50, Default: 3)",
+            "dValue": "(number, Range: 1-100. Default: 10)",
+            "multiplier": "(number, Range: 0.1-10, Default: 1.5)",
+            "curveAngle": "(number, Range: 0-90, Default: 45)",
+            "safetyNetHeight": "(number, Range: 0.1-50, Default: 15)",
+            "safetyNetTransparency": "(number, Range: 0.0-1.0, Default: 0.5)",
+            "safetyNetScaleU": "(number, Range: 0.1-10, Default: 1)",
+            "safetyNetScaleV": "(number, Range: 0.1-10, Default: 1)",
+            "safetyNetColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')"
+          }
+        }
+      ]
+    }
+  }
+}
