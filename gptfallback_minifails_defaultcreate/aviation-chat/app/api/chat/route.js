@@ -57,6 +57,80 @@ function parseAircraftName(text) {
   return name || "001"; // fallback if empty after cleanup
 }
 
+// --- Map user message to layer type ---
+function mapLayerFromUserMessage(msg) {
+  msg = msg.toLowerCase();
+  if (msg.includes("landing surface")) return "TLOF";
+  if (msg.includes("geometry")) return "FATO";
+  if (msg.includes("tlof")) return "TLOF";
+  if (msg.includes("fato")) return "FATO";
+  if (msg.includes("taxiway")) return "TAXIWAY";
+  if (msg.includes("shape")) return "SHAPES";
+  return "TLOF"; // default
+}
+
+// --- Detect user intent ---
+function detectIntent(msg) {
+  msg = msg.toLowerCase();
+  if (msg.includes("create") || msg.includes("add") || msg.includes("new") || msg.includes("another") || msg.includes("make")) return "create";
+  if (msg.includes("update") || msg.includes("change") || msg.includes("modify") || msg.includes("set") || msg.includes("give")) return "update";
+  return "unknown";
+}
+
+// --- Merge updates with existing JSON ---
+function mergeUpdates(existingJson, data, userMessage, intent) {
+  const updatedJson = { ...existingJson };
+  const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPES"];
+
+  function normalizeName(name) {
+    return (name || "").toLowerCase().replace(/[\s_]+/g, "");
+  }
+
+  function getNextLayerName(layerType) {
+    const existing = updatedJson[layerType] || [];
+    let maxId = 0;
+    existing.forEach(item => {
+      const match = (item.dimensions?.layerName || "").match(new RegExp(`^${layerType}_(\\d+)$`));
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxId) maxId = num;
+      }
+    });
+    return `${layerType}_${(maxId + 1).toString().padStart(3, "0")}`;
+  }
+
+  for (const key of possibleLayers) {
+    if (!data[key]) continue;
+    if (!Array.isArray(updatedJson[key])) updatedJson[key] = [];
+
+    data[key].forEach(updateObj => {
+      if (intent === "update") {
+        // Update existing layer by name
+        const idx = updatedJson[key].findIndex(
+          l => normalizeName(l.dimensions?.layerName) === normalizeName(updateObj.dimensions?.layerName)
+        );
+        if (idx !== -1) {
+          updatedJson[key][idx] = {
+            ...updatedJson[key][idx],
+            dimensions: { ...updatedJson[key][idx].dimensions, ...updateObj.dimensions }
+          };
+          return;
+        }
+      }
+
+      // Create new layer if intent is create or no existing layer found
+      const newName = getNextLayerName(key);
+      updatedJson[key].push({
+        position: updateObj.position || [0, 0],
+        isVisible: updateObj.isVisible ?? true,
+        dimensions: { ...updateObj.dimensions, layerName: newName }
+      });
+    });
+  }
+
+  return updatedJson;
+}
+
 // --- Parse layer type from user message ---
 function parseLayerType(text) {
   // First check explicit "use <TLOF|FATO|...>"
@@ -319,7 +393,7 @@ RULES:
       const templateInstruction = templateObj
         ? `\n\nSelected template for ${selectedLayer} (enforce this JSON structure exactly):\n${JSON.stringify(templateObj.content, null, 2)}`
         : "";
-        
+
       const filtered = await azureMini.chat.completions.create({
         model: process.env.AZURE_OPENAI_DEPLOYMENT_MINI,
         messages: [
@@ -347,35 +421,10 @@ RULES:
       text = "Default layer created ";
     }
 
-    // Step 4: Merge AI updates into existing JSON safely (unchanged)
-    let updatedJson = { ...existingJson };
-    const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPES"];
-
-    for (const layerKey of possibleLayers) {
-      if (data[layerKey]) {
-        if (!Array.isArray(updatedJson[layerKey])) updatedJson[layerKey] = [];
-
-        data[layerKey].forEach(updateObj => {
-          const targetLayerName = updateObj.dimensions?.layerName || null;
-          if (!targetLayerName) return;
-
-          const idx = updatedJson[layerKey].findIndex(
-            item => item.dimensions?.layerName === targetLayerName
-          );
-
-          if (idx !== -1) {
-            // Update existing layer
-            updatedJson[layerKey][idx] = {
-              ...updatedJson[layerKey][idx],
-              dimensions: { ...updatedJson[layerKey][idx].dimensions, ...updateObj.dimensions },
-            };
-          } else {
-            // Create new layer
-            updatedJson[layerKey].push(updateObj);
-          }
-        });
-      }
-    }
+    // --- Step 4: Merge AI updates into existing JSON safely ---
+    const intent = detectIntent(userMessage);
+    const updatedJson = mergeUpdates(existingJson, data, userMessage, intent);
+  
 
     // Final output
     console.log("🟢 User asked:", userMessage);

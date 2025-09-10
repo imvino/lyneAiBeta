@@ -9,7 +9,7 @@
           "position": [0, 0],
           "isVisible": true,
           "dimensions": {
-            "layerName": "(string, Must be unique per session. Default: 'TLOF_aircraft')",
+            "layerName": "(string, Must be unique per session. Default: 'TLOF_Unknown')",
             "sides": "(integer, Range: 3-12, Default: 4)",
             "testSides": "(integer, Range: 3-12, Default: 4)",
             "width": "(number, Range: 0.1-100, Default: 30)",

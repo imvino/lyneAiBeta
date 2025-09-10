@@ -18,7 +18,7 @@
             "rotation": "(number, Range: 0-360, Default: 0)",
             "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
             "baseHeight": "(number, Range: -10-50, Default: 0)",
-            "layerName": "(string, Must be unique per session. Default: 'FATO_{{aircraft}}')",
+            "layerName": "(string, Must be unique per session. Default: 'FATO_Unknown')",
             "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
             "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
             "lightColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
