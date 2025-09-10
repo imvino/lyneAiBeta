@@ -319,8 +319,8 @@ RULES:
       const templateInstruction = templateObj
         ? `\n\nSelected template for ${selectedLayer} (enforce this JSON structure exactly):\n${JSON.stringify(templateObj.content, null, 2)}`
         : "";
-
-      const filtered = await azureGpt4.chat.completions.create({
+        
+      const filtered = await azureMini.chat.completions.create({
         model: process.env.AZURE_OPENAI_DEPLOYMENT_MINI,
         messages: [
           { role: "system", content: filterPromptBase + templateInstruction },
