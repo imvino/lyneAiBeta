@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "prompt": "Generate a rectangular TLOF for a tiltrotor aircraft with 30m x 40m dimensions, elevation 5m, rotation 15 degrees, and 0.6 transparency. Location is [139.6917, 35.6895]. Add a 'V' landing marker in blue, scaled to 8, rotated to 90 degrees.",
+    "matched_fields": 22,
+    "mismatched_fields": 2,
+    "accuracy_percent": 91.67,
+    "differences": {
+      "height": {
+        "original": 0.01,
+        "fine_tuned": 0.6
+      },
+      "markingThickness": {
+        "original": 0.5,
+        "fine_tuned": 1
+      }
+    }
+  }
+]
