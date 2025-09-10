@@ -1,0 +1,15 @@
+,Default,Min,Max
+turnType,both,left,straight
+isVisible,True,True,True
+layerName,TAXIWAY_Straight_Default,TAXIWAY_Straight_Min,TAXIWAY_Straight_Max
+baseHeight,0,0,1000
+markerWidth,0.3,0.1,1.9
+taxiExtColor,#808080,#808080,#808080
+taxiRotation,0,0,360
+taxiTurnRadius,20,0.5,100
+taxiMarkerColor,yellow,yellow,yellow
+taxiTextureScaleU,1,1,1
+taxiTextureScaleV,1,1,1
+taxiExtensionWidth,5,0.5,15
+taxiExtTransparency,1,0,1
+taxiExtensionLength,30,1,550

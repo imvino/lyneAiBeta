@@ -1,0 +1,231 @@
+[
+  { 
+  "FATO": [
+    {
+      "position": "([number, number], Latitude & Longitude in WGS84. Clamp Lat -90..90, Lon -180..180)",
+      "isVisible": "(boolean, Default: true)",
+      "dimensions": {
+        "sides": "(integer, Range: 3-12, Default: 4)",
+        "width": "(number, Range: 0.1-100, Default: 30)",
+        "length": "(number, Range: 0.1-100, Default: 30)",
+        "thickness": "(number, Range: 0.01-1.0, Default: 0.5)",
+        "rotation": "(number, Range: 0-360, Default: 0)",
+        "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
+        "baseHeight": "(number, Range: 0-10, Default: 0)",
+        "layerName": "(string, Must be unique per session. Default: 'FATO_aircraft')",
+        "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
+        "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
+        "lightColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
+        "lightScale": "(number, Range: 0.1-5, Default: 1)",
+        "lightDistance": "(number, Range: 0.1-10, Default: 1)",
+        "lightRadius": "(number, Range: 0.1-5, Default: 0.3)",
+        "lightHeight": "(number, Range: 0.1-5, Default: 0.2)"
+      }
+    }
+  ] 
+},
+  { 
+  "TLOF": [
+    {
+      "position": "([number, number], Latitude & Longitude in WGS84. Clamp Lat -90..90, Lon -180..180)",
+      "isVisible": "(boolean, Default: true)",
+      "dimensions": {
+        "sides": "(integer, Range: 3-12, Default: 4)",
+        "width": "(number, Range: 0.1-100, Default: 30)",
+        "length": "(number, Range: 0.1-100, Default: 30)",
+        "thickness": "(number, Range: 0.01-1.0, Default: 0.5)",
+        "rotation": "(number, Range: 0-360, Default: 0)",
+        "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
+        "baseHeight": "(number, Range: 0-10, Default: 0)",
+        "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
+        "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
+        "layerName": "(string, Must be unique per session. Default: 'TLOF_aircraft')",
+        "markingType": "(string, Options: 'solid', 'dashed'. Default: 'dashed')",
+        "markingColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
+        "markingThickness": "(number, Range: 0.2-1.0, Default: 0.5)",
+        "dashDistance": "(number, Range: 0.5-3.0, Default: 1)",
+        "dashLength": "(number, Range: 0.5-3.0, Default: 1)",
+        "landingMarker": "(string, Single char: 'H' or 'V'. Default: 'H')",
+        "markerScale": "(number, Range: 0.1-20, Default: 5)",
+        "markerThickness": "(number, Range: 0.2-1.0, Default: 0.5)",
+        "letterThickness": "(number, Range: 0.2-1.0, Default: 0.5)",
+        "markerRotation": "(number, Range: 0-360, Default: 0)",
+        "markerColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'blue')",
+        "tdpcType": "(string, Options: 'Circle', 'Cross', 'Square'. Default: 'Circle')",
+        "tdpcScale": "(number, Range: 0.1-20, Default: 5)",
+        "tdpcThickness": "(number, Range: 0.01-1.0, Default: 0.5)",
+        "tdpcExtrusion": "(number, Range: 0.0-1.0, Default: 0.02)",
+        "tdpcRotation": "(number, Range: 0-360, Default: 0)",
+        "tdpcColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
+        "lightColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
+        "lightScale": "(number, Range: 0.1-5, Default: 1)",
+        "lightDistance": "(number, Range: 0.1-10, Default: 1)",
+        "lightRadius": "(number, Range: 0.1-5, Default: 0.3)",
+        "lightHeight": "(number, Range: 0.1-5, Default: 0.2)",
+        "safetyAreaType": "(string, Options: 'multiplier', 'offset'. Default: 'multiplier')",
+        "offsetDistance": "(number, Range: 0.1-50, Default: 3)",
+        "dValue": "(number, Range: 1-100. Default: 10)",
+        "multiplier": "(number, Range: 0.1-10, Default: 1.5)",
+        "curveAngle": "(number, Range: 0-90, Default: 45)",
+        "safetyNetHeight": "(number, Range: 0.1-50, Default: 15)",
+        "safetyNetTransparency": "(number, Range: 0.0-1.0, Default: 0.5)",
+        "safetyNetScaleU": "(number, Range: 0.1-10, Default: 1)",
+        "safetyNetScaleV": "(number, Range: 0.1-10, Default: 1)",
+        "safetyNetColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')"
+      }
+    }
+  ] 
+},
+  { 
+  "TAXIWAY": [
+    {
+      "position": "([number, number], Latitude & Longitude in WGS84. Clamp Lat -90..90, Lon -180..180)",
+      "isVisible": "(boolean, Default: true)",
+      "dimensions": {
+        "centerline": "(array of [number, number] points, Minimum: 2 points, Default: [] )",
+        "width": "(number, Range: 0.5-50, Default: 6)",
+        "edgeOffset": "(number, Range: 0.1-10, Default: 0.5)",
+        "length": "(number, Range: 0.1-10000, Default: computed from centerline)",
+        "turnRadius": "(number, Range: 0.1-500, Default: 10)",
+        "surfaceType": "(string, Options: 'asphalt', 'concrete', 'grass', 'gravel', Default: 'asphalt')",
+        "markingType": "(string, Options: 'solid', 'dashed', 'centerline', Default: 'centerline')",
+        "markingColor": "(string, Options: 'yellow','white','red','blue', Default: 'yellow')",
+        "markingThickness": "(number, Range: 0.1-5, Default: 0.5)",
+        "dashDistance": "(number, Range: 0.2-10, Default: 1)",
+        "dashLength": "(number, Range: 0.2-10, Default: 1)",
+        "rotation": "(number, Range: 0-360, Default: 0)",
+        "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
+        "baseHeight": "(number, Range: 0-1000, Default: 0)",
+        "layerName": "(string, Must be unique per session. Default: 'TAXIWAY_surface')",
+        "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
+        "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
+        "lightColor": "(string, Options: 'white','yellow','red','blue', Default: 'white')",
+        "lightScale": "(number, Range: 0.1-20, Default: 1)",
+        "lightDistance": "(number, Range: 0.1-100, Default: 10)",
+        "lightHeight": "(number, Range: 0.01-10, Default: 0.2)",
+        "safetyAreaType": "(string, Options: 'multiplier', 'offset', Default: 'offset')",
+        "offsetDistance": "(number, Range: 0.1-100, Default: 3)",
+        "multiplier": "(number, Range: 0.1-10, Default: 1.5)",
+        "curveAngle": "(number, Range: 0-180, Default: 45)",
+        "safetyNetTransparency": "(number, Range: 0.0-1.0, Default: 0.5)"
+      }
+    }
+  ] 
+},
+  { 
+  "SHAPE": [
+    {
+      "position": "([number, number], Latitude & Longitude in WGS84. Clamp Lat -90..90, Lon -180..180)",
+      "isVisible": "(boolean, Default: true)",
+      "dimensions": {
+        "shapeType": "(string, Options: 'Polygon','Circle','Rectangle','Ellipse','Line', Default: 'Polygon')",
+        "sides": "(integer, Range: 3-360, Default: 4 — only for Polygon)",
+        "radius": "(number, Range: 0.1-10000, Default: 10 — only for Circle/Ellipse)",
+        "width": "(number, Range: 0.01-10000, Default: 1)",
+        "length": "(number, Range: 0.01-10000, Default: 1)",
+        "height": "(number, Range: 0.0-10000, Default: 0.01)",
+        "thickness": "(number, Range: 0.01-100, Default: 0.5)",
+        "rotation": "(number, Range: 0-360, Default: 0)",
+        "curveAngle": "(number, Range: 0-360, Default: 0)",
+        "isClosed": "(boolean, Default: true)",
+        "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
+        "baseHeight": "(number, Range: -1000-10000, Default: 0)",
+        "layerName": "(string, Must be unique per session. Default: 'SHAPE_custom')",
+        "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
+        "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
+        "markingType": "(string, Options: 'none','solid','dashed', Default: 'none')",
+        "markingColor": "(string, Options: 'white','yellow','red','blue', Default: 'white')",
+        "markingThickness": "(number, Range: 0.1-10, Default: 0.5)",
+        "dashDistance": "(number, Range: 0.1-100, Default: 1)",
+        "dashLength": "(number, Range: 0.1-100, Default: 1)",
+        "lightColor": "(string, Options: 'white','yellow','red','blue', Default: 'white')",
+        "lightScale": "(number, Range: 0.1-100, Default: 1)",
+        "lightHeight": "(number, Range: 0.01-100, Default: 0.2)"
+      }
+    }
+  ] 
+},
+  { 
+  "MODEL": [
+    {
+      "position": "([number, number], Latitude & Longitude in WGS84. Clamp Lat -90..90, Lon -180..180)",
+      "isVisible": "(boolean, Default: true)",
+      "dimensions": {
+        "modelId": "(string, Identifier for the 3D model resource)",
+        "scale": "(number, Range: 0.001-100, Default: 1)",
+        "scaleX": "(number, Range: 0.001-100, Default: null — overrides scale when provided)",
+        "scaleY": "(number, Range: 0.001-100, Default: null)",
+        "scaleZ": "(number, Range: 0.001-100, Default: null)",
+        "heading": "(number, Range: 0-360, Default: 0)",
+        "pitch": "(number, Range: -180-180, Default: 0)",
+        "roll": "(number, Range: -180-180, Default: 0)",
+        "elevation": "(number, Range: -1000-10000, Default: 0)",
+        "anchor": "(string, Options: 'center','bottom','top','custom', Default: 'bottom')",
+        "opacity": "(number, Range: 0.0-1.0, Default: 1.0)",
+        "collision": "(boolean, Default: false)",
+        "layerName": "(string, Must be unique per session. Default: 'MODEL_object')",
+        "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
+        "textureScaleV": "(number, Range: 0.1-10, Default: 1)"
+      }
+    }
+  ] 
+},
+  { 
+  "VOLUME": [
+    {
+      "position": "([number, number], Latitude & Longitude in WGS84. Clamp Lat -90..90, Lon -180..180)",
+      "isVisible": "(boolean, Default: true)",
+      "dimensions": {
+        "width": "(number, Range: 0.1-10000, Default: 1)",
+        "length": "(number, Range: 0.1-10000, Default: 1)",
+        "height": "(number, Range: 0.01-10000, Default: 1)",
+        "innerRadius": "(number, Range: 0-10000, Default: 0 — for hollow volumes)",
+        "outerRadius": "(number, Range: 0.1-10000, Default: null — for cylindrical volumes)",
+        "thickness": "(number, Range: 0.01-1000, Default: 0.1)",
+        "rotation": "(number, Range: 0-360, Default: 0)",
+        "shapeType": "(string, Options: 'Box','Cylinder','Sphere','Prism', Default: 'Box')",
+        "material": "(string, Options: 'concrete','glass','steel','air','water', Default: 'concrete')",
+        "opacity": "(number, Range: 0.0-1.0, Default: 0.7)",
+        "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
+        "baseHeight": "(number, Range: -1000-10000, Default: 0)",
+        "layerName": "(string, Must be unique per session. Default: 'VOLUME_zone')"
+      }
+    }
+  ] 
+},
+  { 
+  "FLIGHTPATH": [
+    
+  ] 
+},
+  { 
+  "FLIGHTPATH_VFR": [
+    {
+      "position": "(array of [number, number] waypoints or start point. Lat/Lon WGS84)",
+      "isVisible": "(boolean, Default: true)",
+      "dimensions": {
+        "waypoints": "(array of {position: [lat,lon], altitude: number, remark: string}, Minimum: 2 waypoints)",
+        "cruiseAltitude": "(number, Range: 0-20000, Default: 1000)",
+        "visibilityRequirement": "(string, Options: 'VMC','IMC', Default: 'VMC')",
+        "minSeparation": "(number, Range: 0-1000, Default: 500)",
+        "speed": "(number, Range: 0.1-400, Default: 120)",
+        "markerColor": "(string, Default: 'green')",
+        "lineStyle": "(string, Options: 'solid','dashed', Default: 'dashed')",
+        "thickness": "(number, Range: 0.1-10, Default: 1)",
+        "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
+        "layerName": "(string, Must be unique per session. Default: 'FLIGHTPATH_VFR_route')"
+      }
+    }
+  ] 
+},
+  { 
+  "BUILDING": {
+
+    } 
+  },
+  { 
+  "GROUPS": [
+    
+  ] 
+}
+]
