@@ -1,0 +1,170 @@
+Based on the Azure billing data you've shared, here's a breakdown of your \$81.60 charge and how to identify the **root cause**:
+
+---
+
+### 🔍 Summary of the Usage Line:
+
+| Field                 | Value                                |
+| --------------------- | ------------------------------------ |
+| **Subscription Name** | Microsoft Azure Sponsorship          |
+| **Subscription ID**   | cd7ad108-f6f9-4669-869b-e84a702ebec1 |
+| **Date**              | 07/10/2025                           |
+| **Resource GUID**     | 59f32370-857e-5bec-ab64-6192cc28c77e |
+| **Service Name**      | Cognitive Services                   |
+| **Service Type**      | Azure OpenAI                         |
+| **Service Region**    | US East                              |
+| **Service Resource**  | `gpt-4.1-ft hosting global Unit`     |
+| **Quantity**          | 48.00096 units                       |
+| **Cost**              | \$81.59904                           |
+
+---
+
+### 🧾 Root Cause of the \$81.60 Cost:
+
+#### 1. **Service Involved**
+
+* You were billed under **Cognitive Services > Azure OpenAI**.
+* Specifically, this is related to a **fine-tuned GPT-4.1 model** hosted on Azure:
+
+  * `gpt-4.1-ft hosting global Unit` indicates a **fine-tuned model hosting cost**.
+
+#### 2. **Quantity**
+
+* You were charged for **48.00096 units** of this hosting service.
+
+#### 3. **Cost Breakdown**
+
+* Unit cost:
+  \$81.59904 ÷ 48.00096 ≈ **\$1.70 per unit**
+
+* Azure charges hosting fees for fine-tuned models **per hour**.
+
+  * **48 hours (\~2 days)** of hosting likely occurred.
+  * This is **separate from prompt completion/token usage charges** — it’s a fixed **model hosting cost**.
+
+#### 4. **Why You Were Charged**
+
+* You deployed a **fine-tuned GPT-4.1 model** on Azure OpenAI.
+* That model was **hosted for \~48 hours**, incurring a **fixed hourly hosting fee**.
+* Even if you did not use the model actively (i.e., no completions), the hosting fee applies as long as the model is deployed.
+
+---
+
+### ✅ What You Can Do Next
+
+#### Option 1: **Stop the Charges**
+
+* **Delete or pause** the deployed fine-tuned model if you're not actively using it.
+
+  * Go to the Azure Portal → Azure OpenAI → Deployments → Delete the fine-tuned model.
+
+#### Option 2: **Audit Who/What Triggered the Model**
+
+* Check **Azure Cost Analysis** or **Activity Logs** to see:
+
+  * When the model was deployed
+  * Who deployed it (if multiple team members have access)
+  * How long it has been running
+
+#### Option 3: **Use Consumption Instead of Hosting**
+
+* If you don’t need a **fine-tuned** version, consider using the base GPT-4 model (no hosting fee, pay-per-use).
+* Or, export the fine-tuned model and only deploy it when needed.
+
+---
+
+### 📌 Tip
+
+Model hosting costs can be expensive — even idle models accrue charges. Azure does **not automatically pause or delete** idle deployments.
+
+---
+
+Would you like help locating this model in the Azure portal or writing an alert script to avoid future surprise bills?
+
+
+
+That’s a solid summary — and it looks like you’re clear on what’s happening.
+
+Since the charge was from **hosting a fine-tuned GPT-4.1 model**, and **48+ hours** of deployment time resulted in **\$81.60**, here are a few specific **next-step actions** you might want to take to fully close the loop:
+
+---
+
+## ✅ Immediate Actions to Take in Azure
+
+### 🔍 1. **Find the Exact Resource**
+
+Go to the [Azure Portal](https://portal.azure.com) and follow these steps:
+
+* **Navigate to:**
+  `Azure OpenAI` > `Deployments`
+* **Filter by:**
+
+  * Region: `US East`
+  * Model: `gpt-4.1` or anything labeled with `ft` (fine-tuned)
+* Look for a model that was **deployed between July 8–10**, and note:
+
+  * Deployment name
+  * Creation timestamp
+  * If it’s still active
+
+---
+
+### 💣 2. **Delete or Pause the Deployment**
+
+* If the model is still active:
+
+  * Click **“Delete”** to stop further hourly hosting charges.
+* If you're unsure whether it's in use:
+
+  * Scale down or disable temporarily and set up an alert (see below).
+
+---
+
+### 🧾 3. **Check Azure Cost Analysis**
+
+* Go to **Cost Management + Billing** > **Cost Analysis**
+* Filter by:
+
+  * **Service Name:** Cognitive Services
+  * **Resource Type:** `gpt-4.1-ft hosting global Unit`
+* Click the row to **see the exact resource name and time of deployment**.
+
+---
+
+## 🛡️ Preventive Measures
+
+### 🔔 Create a Cost Alert
+
+1. Go to **Cost Management + Billing** > **Budgets**
+2. Set a small test budget (e.g. \$20) for:
+
+   * Scope: This specific subscription
+   * Filter: `Service Name = Cognitive Services`
+3. Set an email alert to notify you when it hits 50% / 75% / 100%
+
+---
+
+### 🧑‍💼 Identify Who Deployed the Model
+
+To find out who deployed it:
+
+* Go to **Monitor** > **Activity Log**
+* Filter by:
+
+  * Resource type: `Microsoft.CognitiveServices/accounts`
+  * Date: around **July 8–10**
+  * Operation: `Create Deployment` or similar
+
+You’ll see which **user account or service principal** triggered the deployment.
+
+---
+
+## 💬 Want Help?
+
+Would you like:
+
+* A **PowerShell/CLI script** to list and delete fine-tuned deployments?
+* A **Log Analytics query** to find deployment events?
+* An **email alert template**?
+
+Let me know how hands-on you want to be, and I can tailor a script or walk you through the Azure UI more deeply.

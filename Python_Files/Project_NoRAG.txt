@@ -1,0 +1,53 @@
+## 1️⃣ Core Decision: Multiple Agents vs Single Agent with Functions
+
+Option 1: Single Agent with Multiple Tools/Functions (Recommended)  
+- You can have one LangChain agent that can call different tools/functions depending on user intent.  
+- Tools could include:  
+  1. Create JSON geometry  
+  2. Update JSON geometry  
+  3. Query JSON from Supabase  
+  4. General aviation knowledge Q&A  
+- Pros: Easier to manage, a single conversation memory, more seamless multi-turn chats.  
+- Cons: Slightly more logic inside the agent to detect which tool to call.
+
+Option 2: Multiple Agents  
+- One agent for JSON creation/updating, another for general aviation questions.  
+- Pros: Separation of concerns; simpler prompts per agent.  
+- Cons: Harder to maintain conversation memory across agents. Users switching between intents might feel inconsistent.
+
+💡 Recommendation: Use one agent + multiple tools/functions. Let the agent route tasks dynamically.  
+
+---
+
+## 2️⃣ Architecture Overview
+
+Components:  
+
+1. LangChain Agent – central brain.  
+2. Memory – `ConversationBufferMemory` (do not use `ConversationSummaryMemory`) to remember previous messages.  
+3. Tools/Functions:  
+   - `create_geometry(data: dict)` → returns JSON  (Define each geometry as a Pydantic class with validation)
+   - `update_geometry(id: str, key: str, value: any)` → modifies JSON in Supabase  
+   - `query_aviation_knowledge(question: str)` → optional: use OpenAI or a vector store  
+4. Supabase – store JSON geometries and possibly conversation logs.  
+5. JSON Schema Validation – ensure created/updated JSON is valid for your aviation geometries.  
+
+---
+
+## 3️⃣ Flow Example
+
+1. User: “Create a TLOF for Flight ABC with length 30m and width 30m.”  
+2. Agent detects intent → calls `create_geometry` → saves to Supabase → returns JSON.  
+3. User: “Update TLOF width to 35m.”  
+4. Agent detects update intent → calls `update_geometry` → modifies only width in Supabase.  
+5. User: “What is the standard width for a helipad?”  
+6. Agent detects Q&A intent → fetches answer from knowledge base or LLM → responds.  
+
+---
+
+## 4️⃣ Python + LangChain Setup
+
+- Agent: `initialize_agent` with `tools=[create, update, query]`  
+- Memory: `ConversationBufferMemory`  
+- Supabase: Python client `supabase-py`  
+- JSON handling: Pydantic models or plain dicts with validation  

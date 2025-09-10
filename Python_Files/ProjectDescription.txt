@@ -1,0 +1,145 @@
+Perfect 💡 — so your project also includes **RAG (Retrieval-Augmented Generation)** using **aviation regulations** (like FAA in the USA). That makes it even stronger, because it’s not just about geospatial processing but also **regulation-grounded AI**.
+
+Here’s the refined project description with **RAG + FAA regulations** included:
+
+---
+
+## Internship Project Description
+
+**Project Title:**
+AI-Powered Geospatial and Regulatory System for Aviation Infrastructure
+
+**Objective:**
+The project aims to design and develop an intelligent system that combines natural language understanding, geospatial analysis, and regulatory retrieval to support aviation infrastructure planning. By integrating Retrieval-Augmented Generation (RAG) with aviation regulations (e.g., FAA, USA), the system will automatically generate compliant geometries such as TLOF, FATO, and safety areas, providing structured outputs aligned with regulatory standards.
+
+**Project Scope:**
+
+* Implement an **LLM-powered interface** using **Python** and **LangChain** to interpret user requirements.
+* Use **longitude and latitude inputs** to identify and contextualize geographical positions.
+* Build a **RAG pipeline** that retrieves relevant rules and requirements from **aviation regulations (e.g., FAA, USA)**.
+* Manage regulation and geospatial data using **Supabase**.
+* Deploy and scale the solution on **Azure**.
+* Generate aviation-related geometrical outputs (TLOF, FATO, SIL, safety areas, etc.) based on both geospatial context and regulatory compliance.
+
+**Expected Deliverables:**
+
+1. A functional system capable of:
+
+   * Interpreting natural language inputs.
+   * Retrieving aviation regulations using **RAG**.
+   * Extracting compliance rules from FAA regulations.
+   * Generating geometries (TLOF, FATO, safety zones) aligned with regulatory requirements.
+   * Providing structured compliance reports and recommendations.
+2. A **Supabase-backed regulatory and geospatial database**.
+3. Documentation of the **RAG pipeline**, methodology, and system design.
+4. A final project presentation and demonstration.
+
+**Learning Outcomes:**
+
+* Hands-on experience in building **RAG-based systems** for real-world compliance.
+* Integration of **LLMs with regulatory datasets** using LangChain.
+* Application of **geospatial analysis** in aviation contexts.
+* Exposure to **Supabase for data management** and **Azure for deployment**.
+* Practical understanding of **aviation regulations (FAA, USA)** and their automation.
+
+**Duration:** 4 Months
+**Mentor/Supervisor:** \[Your Name, Data Scientist]
+
+---
+
+*****************************
+
+
+Perfect 🔥 — thanks for clarifying the full flow. Now it’s clear:
+
+* **User Input → LLM decides which regulation to use (based on lat/long + region)**
+* **RAG retrieves the regulation text (FAA, etc.)**
+* **LLM checks user requirements vs regulation constraints (e.g., diameter ≤ 10m)**
+* **System generates the geometry (TLOF, FATO, SIL, etc.)**
+* **Geometry saved in Supabase → rendered in 3D in a web app (Streamlit)**
+
+Here’s the **final polished project description** with all of that included:
+
+---
+
+## Internship Project Description
+
+**Project Title:**
+AI-Driven Geospatial Regulatory Compliance System for Aviation Infrastructure
+
+**Objective:**
+The project aims to develop an intelligent, regulation-aware system that leverages natural language processing, geospatial analysis, and Retrieval-Augmented Generation (RAG) to assist in aviation infrastructure planning. The system will identify applicable aviation regulations (e.g., FAA, USA) based on user-provided location (latitude/longitude), validate design requirements against these regulations, and automatically generate compliant geometries (e.g., TLOF, FATO, safety zones). These geometries will be stored in Supabase and visualized in 3D using a Streamlit-based web application.
+
+**Project Scope:**
+
+* Implement an **LLM-powered query interface** (Python + LangChain) for natural language input.
+* Build a **RAG pipeline** to dynamically retrieve aviation regulations based on user input and geospatial location.
+* Automatically select the **relevant regulation authority** (e.g., FAA for USA, other authorities for different regions).
+* Match user requirements with regulation parameters (e.g., diameter constraints, elevation, clearance zones).
+* Generate compliant aviation geometries (TLOF, FATO, SIL, safety areas, etc.).
+* Store geometries and compliance data in **Supabase**.
+* Develop a **Streamlit web application** to visualize generated geometries in **3D**.
+* Deploy and scale the system using **Azure cloud services**.
+
+**Expected Deliverables:**
+
+1. A working intelligent system capable of:
+
+   * Interpreting user requirements via natural language input.
+   * Identifying applicable aviation regulations from RAG.
+   * Validating user-defined geometries against regulation rules.
+   * Generating 2D/3D compliant geometries stored in Supabase.
+   * Rendering interactive 3D visualizations in Streamlit.
+2. A **Supabase-backed regulatory and geospatial database**.
+3. Documentation of the architecture, RAG pipeline, and methodology.
+4. Final report and demonstration of the full system.
+
+**Learning Outcomes:**
+
+* Hands-on experience in **RAG integration** with regulatory datasets.
+* Application of **LangChain + LLMs** in compliance automation.
+* Practical skills in **geospatial data processing and geometry generation**.
+* Database integration using **Supabase**.
+* Building **interactive 3D applications with Streamlit**.
+* End-to-end deployment on **Azure**.
+* Exposure to **aviation regulations (FAA and others)** and their real-world implementation.
+
+**Duration:** 4 Months
+**Mentor/Supervisor:** \[Your Name, Data Scientist]
+
+---
+**********************************
+You are an AI assistant specialized in aviation facility design.
+Your tasks are:
+
+Facility Design in JSON
+
+Create and update aviation-related infrastructure designs (helipads, landing pads, runways, taxiways, roads, etc.) in strict JSON format.
+
+Always follow the provided JSON schema or generate valid JSON that can be parsed by downstream systems.
+
+Regulation Compliance
+
+You have access to flight authority regulations (e.g., FAA PDFs and other country-specific documents).
+
+When generating or updating JSON, adjust all parameters to comply with the latest regulations for the specified country.
+
+Example: If a user requests a helipad of 20m x 20m, but FAA regulations limit it to 15m x 15m, automatically adjust values to 15m x 15m and explain the adjustment in the JSON adjustments field.
+
+Memory
+
+Maintain conversational memory so users can refine or update their design across multiple turns.
+
+Remember past specifications in the current session and merge new updates into the design JSON.
+
+General Q&A
+
+Answer aviation-related questions based on regulations, design standards, and best practices.
+
+Provide concise, citation-backed answers when referring to specific regulatory clauses.
+
+Output Rules:
+
+If the intent is general Q&A, return a natural language answer with citations.
+
+If the intent is design/update, return only valid JSON following the schema, with an adjustments field when regulatory changes are applied.
