@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { AzureOpenAI } from "openai";
 import axios from "axios";
+import fs from "fs";
+import path from "path";
 
 // --- Azure GPT-4.1-mini (filter) ---
 const azureMini = new AzureOpenAI({
@@ -47,6 +49,100 @@ function extractJson(text) {
   return match ? match[0] : "{}";
 }
 
+// --- Map user message to layer types (plural) ---
+function mapLayersFromUserMessage(msg) {
+  msg = msg.toLowerCase();
+  const layers = [];
+
+  if (msg.includes("landing surface") || msg.includes("tlof")) layers.push("TLOF");
+  if (msg.includes("geometry") || msg.includes("fato")) layers.push("FATO");
+  if (msg.includes("taxiway")) layers.push("TAXIWAY");
+  if (msg.includes("shape")) layers.push("SHAPES");
+
+  // If nothing matched, fall back to TLOF
+  if (layers.length === 0) layers.push("TLOF");
+
+  return layers;
+}
+
+// --- Detect user intent ---
+function detectIntent(msg) {
+  msg = msg.toLowerCase();
+  if (msg.includes("create") || msg.includes("add") || msg.includes("new") || msg.includes("another") || msg.includes("make")) return "create";
+  if (msg.includes("update") || msg.includes("change") || msg.includes("modify") || msg.includes("set") || msg.includes("give")) return "update";
+  return "unknown";
+}
+
+// --- Merge updates with existing JSON ---
+function mergeUpdates(existingJson, data, userMessage, intent) {
+  const updatedJson = { ...existingJson };
+  const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPES"];
+
+  function normalizeName(name) {
+    return (name || "").toLowerCase().replace(/[\s_]+/g, "");
+  }
+
+  function getNextLayerName(layerType) {
+    const existing = updatedJson[layerType] || [];
+    let maxId = 0;
+    existing.forEach(item => {
+      const match = (item.dimensions?.layerName || "").match(new RegExp(`^${layerType}_(\\d+)$`));
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxId) maxId = num;
+      }
+    });
+    return `${layerType}_${(maxId + 1).toString().padStart(3, "0")}`;
+  }
+
+  for (const key of possibleLayers) {
+    if (!data[key]) continue;
+    if (!Array.isArray(updatedJson[key])) updatedJson[key] = [];
+
+    data[key].forEach(updateObj => {
+      if (intent === "update") {
+        // Update existing layer by name
+        const idx = updatedJson[key].findIndex(
+          l => normalizeName(l.dimensions?.layerName) === normalizeName(updateObj.dimensions?.layerName)
+        );
+        if (idx !== -1) {
+          updatedJson[key][idx] = {
+            ...updatedJson[key][idx],
+            dimensions: { ...updatedJson[key][idx].dimensions, ...updateObj.dimensions }
+          };
+          return;
+        }
+      }
+
+      // Create new layer if intent is create or no existing layer found
+      const newName = getNextLayerName(key);
+      updatedJson[key].push({
+        position: updateObj.position || [0, 0],
+        isVisible: updateObj.isVisible ?? true,
+        dimensions: { ...updateObj.dimensions, layerName: newName }
+      });
+    });
+  }
+
+  return updatedJson;
+}
+
+// --- Tiny template loader: loads templates/<name>.json from repo root ---
+const TEMPLATES_DIR = path.join(process.cwd(), "templates");
+function getTemplateByName(name) {
+  try {
+    const file = path.join(TEMPLATES_DIR, `${name.toLowerCase()}.json`);
+    if (!fs.existsSync(file)) return null;
+    const raw = fs.readFileSync(file, "utf8");
+    const parsed = JSON.parse(raw);
+    // We expect template content to live under parsed.content (as you've planned)
+    return parsed;
+  } catch (err) {
+    console.warn("template load failed:", err?.message || err);
+    return null;
+  }
+}
+
 // --- Parse aircraft name from user message ---
 function parseAircraftName(text) {
   const match = text.match(/(?:for|of)\s+([A-Za-z0-9\- ]{2,50})/i);
@@ -57,14 +153,17 @@ function parseAircraftName(text) {
 
 // --- Parse layer type from user message ---
 function parseLayerType(text) {
+  // First check explicit "use <TLOF|FATO|...>"
+  const explicit = text.match(/\buse\s+(TLOF|FATO|TAXIWAY|SHAPES)\b/i);
+  if (explicit) return explicit[1].toUpperCase();
   const match = text.match(/\b(TLOF|FATO|TAXIWAY|SHAPES)\b/i);
   return match ? match[1].toUpperCase() : "TLOF";
 }
 
-// --- Create default layer if filter fails for a single requested layer ---
-function createDefaultLayer(userMessage) {
+// --- Create default layer if filter fails ---
+function createDefaultLayer(userMessage, forcedLayerType) {
   const aircraftName = parseAircraftName(userMessage);
-  const layerType = parseLayerType(userMessage); // e.g., TLOF, FATO, TAXIWAY, SHAPES
+  const layerType = forcedLayerType || parseLayerType(userMessage);
 
   let layer = {
     position: [0, 0],
@@ -72,7 +171,7 @@ function createDefaultLayer(userMessage) {
     dimensions: { layerName: `${layerType}_${aircraftName}` }
   };
 
-  // Layer-specific defaults
+  // Layer-specific defaults (unchanged)
   switch (layerType) {
     case "TLOF":
       layer.dimensions = {
@@ -125,7 +224,7 @@ function createDefaultLayer(userMessage) {
     case "FATO":
       layer.dimensions = {
         ...layer.dimensions,
-        sides: 6, // default hexagonal
+        sides: 6,
         diameter: 30,
         width: 30,
         length: 30,
@@ -190,7 +289,6 @@ function createDefaultLayer(userMessage) {
       break;
 
     default:
-      // Unknown layer, create minimal safe defaults
       layer.dimensions = {
         ...layer.dimensions,
         sides: 4,
@@ -230,148 +328,114 @@ export async function POST(req) {
 
     // --- Step 1: Azure Search ---
     const kbResult = await performAzureSearch(userMessage);
-// Debug log: show Azure Search result & score
     if (kbResult.content) {
-     console.log(`🔎 Azure Search result score: ${kbResult.score.toFixed(2)}`);
-  } else {
-     console.log("🔎 Azure Search returned no content");
-  }
+      console.log(`🔎 Azure Search result (score: ${kbResult.score.toFixed(2)}): "${kbResult.content.slice(0, 80)}..."`);
+    } else {
+      console.log("🔎 Azure Search returned no content");
+    }
 
-if (kbResult.content && kbResult.score > 20) {
-  // Strong hit → use Azure Search
-  rawAnswer = kbResult.content;
-  source = "azure-search";
-} else {
-  console.warn("⚠️ Falling back to Azure GPT-4 (no strong Azure Search result)");
-
-      // Step 2: GPT-4 fallback
+    if (kbResult.content && kbResult.score > 20) {
+      rawAnswer = kbResult.content;
+      source = "azure-search";
+    } else {
+      console.warn("⚠️ Falling back to Azure GPT-4 (no strong Azure Search result)");
       try {
         const resp = await azureGpt4.chat.completions.create({
           model: process.env.AZURE_OPENAI_DEPLOYMENT_GPT4,
           messages: [
-            {role: "system",content: `You are an aviation design assistant. Provide factual aircraft dimensions and layer suggestions in JSON.`},
-            { role: "user", content: userMessage }], max_tokens: 700,});
+            { role: "system", content: `You are an aviation design assistant. Provide factual aircraft dimensions and layer suggestions in JSON.` },
+            { role: "user", content: userMessage }
+          ],
+          max_tokens: 700,
+        });
         rawAnswer = resp.choices?.[0]?.message?.content || "";
         source = "azure-gpt4";
         console.log("✅ GPT-4 provided the fallback answer");
-    } catch (err) {
-      console.error("❌ Azure GPT-4 failed:", err.message);
-      rawAnswer = "{}";
-      source = "error";
-  }
-}
+      } catch (err) {
+        console.error("❌ Azure GPT-4 failed:", err.message || err);
+        rawAnswer = "{}";
+        source = "error";
+      }
+    }
 
-    // Step 3: Filter with GPT-4.1-mini
+    // --- SELECT TEMPLATE BASED ON USER INPUT (minimal change) ---
+    // Preference: explicit "use <TLOF|FATO|...>" in user message; otherwise parse from content.
+    const selectedLayers = mapLayersFromUserMessage(userMessage); // returns an array
+    const templates = selectedLayers
+  .map(layer => {
+    const templateObj = getTemplateByName(layer); // load each template
+    if (templateObj) {
+      console.log(`📄 Using template: ${layer} (from templates/${layer.toLowerCase()}.json)`);
+    } else {
+      console.log(`📄 No template file for ${layer}, filter will run without a template file.`);
+    }
+    return templateObj ? { layer, content: templateObj.content } : null;
+  })
+  .filter(Boolean); // remove nulls
+  
+
+    // Step 3: Filter with GPT-4.1-mini (we still call your azureGpt4 as filter in current code)
     let text = "";
     let data = {};
     try {
-      const filterPrompt = `You are a filtering assistant.
+      // build filter prompt: include the large RULES + the selected template (if present)
+      const filterPromptBase = `You are a filtering assistant.
 ### Task
 - Take the raw GPT-4 factual answer.
 - Keep the natural text explanation exactly (or correct if unsafe).
 - Extract structured parameters, extract dimension data from azure search or gpt-4 in 'meters' always.
 - ALWAYS RETURN FULL JSON OUTPUT.
+- Always return a single JSON object with this shape:
 
-Always return JSON output following this schema:
 {
-  "text": "<short natural explanation>",
+  "text": "<short explanation of what was done>",
   "data": {
-    "FATO": [
-      {
-        "position": "([number, number], Latitude & Longitude in WGS84. Clamp Lat -90..90, Lon -180..180)",
-        "isVisible": "(boolean, Default: true)",
-        "dimensions": {
-          "sides": "(integer, Range: 3-12, Default: 4)",
-          "diameter": "(number, Range: 0.1-100, Default: 30)",
-          "width": "(number, Range: 0.1-100, Default: 30)",
-          "length": "(number, Range: 0.1-100, Default: 30)",
-          "thickness": "(number, Range: 0.01-1.0, Default: 0.5)",
-          "rotation": "(number, Range: 0-360, Default: 0)",
-          "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
-          "baseHeight": "(number, Range: 0-10, Default: 0)",
-          "layerName": "(string, Must be unique per session. Default: 'FATO_Unknown')",
-          "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
-          "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
-          "lightColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
-          "lightScale": "(number, Range: 0.1-5, Default: 1)",
-          "lightDistance": "(number, Range: 0.1-10, Default: 1)",
-          "lightRadius": "(number, Range: 0.1-5, Default: 0.3)",
-          "lightHeight": "(number, Range: 0.1-5, Default: 0.2)"
-        }
-      }
-    ]
-  },
-    "TLOF": [
-      {
-        "position": "([number, number], Latitude & Longitude in WGS84. Clamp Lat -90..90, Lon -180..180)",
-        "isVisible": "(boolean, Default: true)",
-        "dimensions": {
-          "sides": "(integer, Range: 3-12, Default: 4)",
-          "diameter": "(number, Range: 0.1-100, Default: 30)",
-          "width": "(number, Range: 0.1-100, Default: 30)",
-          "length": "(number, Range: 0.1-100, Default: 30)",
-          "thickness": "(number, Range: 0.01-1.0, Default: 0.5)",
-          "rotation": "(number, Range: 0-360, Default: 0)",
-          "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
-          "baseHeight": "(number, Range: 0-10, Default: 0)",
-          "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
-          "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
-          "layerName": "(string, Must be unique per session. Default: 'TLOF_Unknown')",
-          "markingType": "(string, Options: 'solid', 'dashed'. Default: 'dashed')",
-          "markingColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
-          "markingThickness": "(number, Range: 0.2-1.0, Default: 0.5)",
-          "dashDistance": "(number, Range: 0.5-3.0, Default: 1)",
-          "dashLength": "(number, Range: 0.5-3.0, Default: 1)",
-          "landingMarker": "(string, Single char: 'H' or 'V'. Default: 'H')",
-          "markerScale": "(number, Range: 0.1-20, Default: 5)",
-          "markerThickness": "(number, Range: 0.2-1.0, Default: 0.5)",
-          "letterThickness": "(number, Range: 0.2-1.0, Default: 0.5)",
-          "markerRotation": "(number, Range: 0-360, Default: 0)",
-          "markerColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'blue')",
-          "tdpcType": "(string, Options: 'Circle', 'Cross', 'Square'. Default: 'Circle')",
-          "tdpcScale": "(number, Range: 0.1-20, Default: 5)",
-          "tdpcThickness": "(number, Range: 0.01-1.0, Default: 0.5)",
-          "tdpcExtrusion": "(number, Range: 0.0-1.0, Default: 0.02)",
-          "tdpcRotation": "(number, Range: 0-360, Default: 0)",
-          "tdpcColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
-          "lightColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",
-          "lightScale": "(number, Range: 0.1-5, Default: 1)",
-          "lightDistance": "(number, Range: 0.1-10, Default: 1)",
-          "lightRadius": "(number, Range: 0.1-5, Default: 0.3)",
-          "lightHeight": "(number, Range: 0.1-5, Default: 0.2)",
-          "safetyAreaType": "(string, Options: 'multiplier', 'offset'. Default: 'multiplier')",
-          "offsetDistance": "(number, Range: 0.1-50, Default: 3)",
-          "dValue": "(number, Range: 1-100. Default: 10)",
-          "multiplier": "(number, Range: 0.1-10, Default: 1.5)",
-          "curveAngle": "(number, Range: 0-90, Default: 45)",
-          "safetyNetHeight": "(number, Range: 0.1-50, Default: 15)",
-          "safetyNetTransparency": "(number, Range: 0.0-1.0, Default: 0.5)",
-          "safetyNetScaleU": "(number, Range: 0.1-10, Default: 1)",
-          "safetyNetScaleV": "(number, Range: 0.1-10, Default: 1)",
-          "safetyNetColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')"                    
-        }
-      }
-    ]
+    "TLOF": [...],
+    "FATO": [...],
+    "TAXIWAY": [...],
+    "SHAPES": [...]
   }
+}
+
+- "data" must always contain the selected templates filled with parameters from the user request.
+- Never return {} for data.
+- Only return data for the layers explicitly requested in the user’s message: ${selectedLayers.join(", ")}.
+- Do not create or duplicate other layer types.
+
+Layer selection rules:
+- If user mentions "landing surface" or "tlof" → use TLOF
+- If user mentions "geometry" or "fato" → use FATO
+- If user mentions "taxiway" → use TAXIWAY
+- If user mentions "shape" → use SHAPES
+- Never create layers not explicitly requested by the user
 
 RULES:
 - Aircraft dimensions must remain within published ranges.
-- JSON should always reflect the applied changes, not just the explanation text.
-- Return the response in JSON format along with a text defining the reason if user suggests invalid values:
-  - In "text", explain the corrected values only in short words.
-  - In "data", set corrected safe values.
+- For categorical fields (like tdpcColor, markingColor, markerColor, lightColor):
+  * Always update them if the user explicitly requests a change.
+  * If the requested value is outside allowed options, replace with the nearest valid one and explain in "text".
 - When the user requests **new layers**, create full valid JSON with new layer names.
-- When the user requests **updates**, change only the required fields in the particular layerName and return full layer output.
-- If the user says "landing surface", always map it to **TLOF** only & if "geometry", always map it to **FATO** only.
-`;
+- When the user requests **updates**, change only the required fields in the particular layerName.
+- Always use aircraft name along with layer name if mentioned by user or take from raw answer (Eg:TLOF_JobyS4) or if nothing found give 'layername_series' (Eg:TLOF_001 or FATO_001).
+- Never return FAA advisory text, long documents, or irrelevant data. Always return valid JSON.`;
+
+      // If template exists, append it to prompt so filter enforces template structure
+      let templateInstruction = "";
+if (templates.length > 0) {
+  templateInstruction =
+    "\n\nSelected templates (enforce these JSON structures exactly):\n" +
+    templates
+      .map(t => `${t.layer}:\n${JSON.stringify(t.content, null, 2)}`)
+      .join("\n\n");
+}
 
       const filtered = await azureMini.chat.completions.create({
         model: process.env.AZURE_OPENAI_DEPLOYMENT_MINI,
         messages: [
-          { role: "system", content: filterPrompt },
+          { role: "system", content: filterPromptBase + templateInstruction },
           { role: "user", content: `User asked: ${userMessage}\n\nExisting JSON: ${JSON.stringify(existingJson)}\n\nRaw GPT-4 answer: ${rawAnswer}` },
         ],
-        max_tokens: 700,
+        max_tokens: 1700,
         temperature: 0.3,
       });
 
@@ -381,112 +445,25 @@ RULES:
       data = parsed.data || {};
 
       // Fallback if filter returned empty
-      if (!data || Object.keys(data).length === 0) {
-        console.warn("⚠️ Filter returned empty, creating default layer");
-        data = createDefaultLayer(userMessage);
-        text = "Default layer created based on user request and PARAM_RULES.";
-      }
+  if (!data || Object.keys(data).length === 0) {
+  console.warn("⚠️ Filter returned empty, creating default layers");
+  data = {};
+  for (const layer of selectedLayers) {
+    data[layer] = createDefaultLayer(userMessage, layer)[layer];
+  }
+  if (!text) text = "Default layers created based on user request and PARAM_RULES.";
+}
+
     } catch (err) {
-      console.error("❌ Filtering failed:", err.message);
+      console.error("❌ Filtering failed:", err.message || err);
       data = createDefaultLayer(userMessage);
       text = "Default layer created ";
     }
-    
-    // --- Detect intent from user message ---
-function detectIntent(msg) {
-  msg = msg.toLowerCase();
-  if (msg.includes("create") || msg.includes("add") || msg.includes("new") || msg.includes("another") || msg.includes("make")) {
-    return "create";
-  }
-  if (msg.includes("update") || msg.includes("change") || msg.includes("modify") || msg.includes("set") || msg.includes("give")) {
-    return "update";
-  }
-  return "unknown";
-}
-const intent = detectIntent(userMessage);
 
-// Map keywords in user message to layer type
-const mapLayerFromUserMessage = (msg) => {
-  msg = msg.toLowerCase();
-  if (msg.includes("landing surface")) return "TLOF";
-  if (msg.includes("geometry")) return "FATO";
-  if (msg.includes("tlof")) return "TLOF";
-  if (msg.includes("fato")) return "FATO";
-  if (msg.includes("taxiway")) return "TAXIWAY";
-  if (msg.includes("shape")) return "SHAPES";
-  return "TLOF"; // default
-};
-
-    // Step 4: Merge AI updates into existing JSON safely
-const updatedJson = mergeUpdates(existingJson, data, userMessage, intent);
-
-
-// Merge updates and create missing TLOF/FATO
-function mergeUpdates(existingJson, data, userMessage, intent) {
-  const updatedJson = { ...existingJson };
-  const layerTypeFromMsg = mapLayerFromUserMessage(userMessage);
-  const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPES"];
-
-  function normalizeName(name) {
-    return (name || "").toLowerCase().replace(/[\s_]+/g, "");
-  }
-
-  function getNextLayerName(layerType) {
-    const existing = updatedJson[layerType] || [];
-    let maxId = 0;
-    existing.forEach(item => {
-      const match = (item.dimensions?.layerName || "").match(new RegExp(`^${layerType}_(\\d+)$`));
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxId) maxId = num;
-      }
-    });
-    return `${layerType}_${(maxId + 1).toString().padStart(3, "0")}`;
-  }
-
-  for (const key of possibleLayers) {
-    if (!data[key]) continue;
-    if (!Array.isArray(updatedJson[key])) updatedJson[key] = [];
-
-    data[key].forEach(updateObj => {
-      if (intent === "update") {
-        // Try update existing layer by name
-        const idx = updatedJson[key].findIndex(
-          l => normalizeName(l.dimensions?.layerName) === normalizeName(updateObj.dimensions?.layerName)
-        );
-        if (idx !== -1) {
-          updatedJson[key][idx] = {
-            ...updatedJson[key][idx],
-            dimensions: { ...updatedJson[key][idx].dimensions, ...updateObj.dimensions }
-          };
-          return;
-        }
-      }
-
-      // If intent is create or no existing layer found → create new with numbered name
-      const newName = getNextLayerName(key);
-      updatedJson[key].push({
-        position: updateObj.position || [0, 0],
-        isVisible: updateObj.isVisible ?? true,
-        dimensions: { ...updateObj.dimensions, layerName: newName }
-      });
-    });
-  }
-
-  // Ensure requested TLOF/FATO exists if none exist
-  ["TLOF", "FATO"].forEach(type => {
-    if (type === layerTypeFromMsg && (!updatedJson[type] || updatedJson[type].length === 0)) {
-      updatedJson[type] = updatedJson[type] || [];
-      updatedJson[type].push({
-        position: [0, 0],
-        isVisible: true,
-        dimensions: { layerName: `${type}_001` }
-      });
-    }
-  });
-
-  return updatedJson;
-}
+    // --- Step 4: Merge AI updates into existing JSON safely ---
+    const intent = detectIntent(userMessage);
+    const updatedJson = mergeUpdates(existingJson, data, userMessage, intent);
+  
 
     // Final output
     console.log("🟢 User asked:", userMessage);
@@ -502,7 +479,7 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
     });
 
   } catch (err) {
-    console.error("Server error:", err.message);
+    console.error("Server error:", err.message || err);
     return NextResponse.json({ content: "Server error" }, { status: 500 });
   }
 }
