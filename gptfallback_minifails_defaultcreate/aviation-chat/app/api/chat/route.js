@@ -363,7 +363,7 @@ export async function POST(req) {
     } else {
       console.log(`📄 No template file for ${selectedLayer}, filter will run without a template file.`);
     }
-
+    
     // Step 3: Filter with GPT-4.1-mini (we still call your azureGpt4 as filter in current code)
     let text = "";
     let data = {};
@@ -386,7 +386,9 @@ RULES:
   * If the requested value is outside allowed options, replace with the nearest valid one and explain in "text".
 - When the user requests **new layers**, create full valid JSON with new layer names.
 - When the user requests **updates**, change only the required fields in the particular layerName.
-- Always use aircraft name along with layer name if mentioned by user or take from raw answer (Eg:TLOF_JobyS4) or if nothing found give 'layername_series' (Eg:TLOF_001 or FATO_001).
+- If no name is specified while creating a layer, assign a default name such as FATO_001.
+- If a layer with that name already exists, the new one should automatically be named FATO_002, FATO_003, and so on.
+- There is no need to include the aircraft name in the layer name.
 - Never return FAA advisory text, long documents, or irrelevant data. Always return valid JSON.`;
 
       // If template exists, append it to prompt so filter enforces template structure
