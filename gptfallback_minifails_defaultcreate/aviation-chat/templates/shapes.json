@@ -1,0 +1,39 @@
+{
+  "name": "SHAPES",
+  "description": "SHAPES output template (wrapped with text + data)",
+  "content": {
+    "text": "<short natural explanation>",
+    "data": {
+      "SHAPES": [
+     {
+        "position": [0, 0],
+        "isVisible": true,
+        "dimensions": {
+          "color": "(string, Options: 'white', 'yellow', 'red', 'blue', 'gray', 'black'. Default: 'yellow')",
+          "width": "(number, Range: 0.01-10, Default: 0.3)",
+          "height": "(number, Range: 0.01-10, Default: 0.1)",
+          "dashGap": "(number, Range: 0-50, Default: 2)",
+          "endPoint": "(array or null, Example: [lat, lon]. Default: null)",
+          "rotation": "(number, Range: 0-360, Default: 0)",
+          "isVisible": "(boolean, Default: true)",
+          "layerName": "(string, Must be unique per session. Default: 'SHAPES_Unknown')",
+          "lineStyle": "(string, Options: 'solid', 'dashed', 'dotted'. Default: 'solid')",
+          "lineWidth": "(number, Range: 0.01-5, Default: 0.5)",
+          "baseHeight": "(number, Range: 0-100, Default: 0)",
+          "dashLength": "(number, Range: 0.1-50, Default: 2)",
+          "lineLength": "(number, Range: 0.1-500, Default: 10)",
+          "startPoint": "(array or null, Example: [lat, lon]. Default: null)",
+          "hollowScale": "(number, Range: 0-10, Default: 0)",
+          "circleRadius": "(number, Range: 0.1-500, Default: 5)",
+          "lineCategory": "(boolean, Default: false)",
+          "polygonSides": "(integer, Range: 3-12, Default: 3)",
+          "polygonRadius": "(number, Range: 0.1-500, Default: 5)",
+          "circleCategory": "(boolean, Default: true)",
+          "polygonCategory": "(boolean, Default: false)",
+          "dashedCircleRadius": "(number, Range: 0.1-100, Default: 0.5)"
+          }
+        }
+      ]
+    }
+  }
+}
