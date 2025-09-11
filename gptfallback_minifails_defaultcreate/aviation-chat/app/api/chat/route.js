@@ -51,18 +51,15 @@ function extractJson(text) {
 
 // --- Map user message to layer types (plural) ---
 function mapLayersFromUserMessage(msg) {
-  msg = msg.toLowerCase();
+  const text = msg.toLowerCase().replace(/[\s_]+/g, " "); // normalize spaces & underscores
   const layers = [];
 
-  if (msg.includes("landing surface") || msg.includes("tlof")) layers.push("TLOF");
-  if (msg.includes("geometry") || msg.includes("fato")) layers.push("FATO");
-  if (msg.includes("taxiway")) layers.push("TAXIWAY");
-  if (msg.includes("shape")) layers.push("SHAPES");
+  if (/\b(tlof|landing surface)\b/.test(text)) layers.push("TLOF");
+  if (/\b(fato|geometry)\b/.test(text)) layers.push("FATO");
+  if (/\btaxiway(s)?\b/.test(text)) layers.push("TAXIWAY");
+  if (/\bshape(s)?\b/.test(text)) layers.push("SHAPES");
 
-  // If nothing matched, fall back to TLOF
-  if (layers.length === 0) layers.push("TLOF");
-
-  return layers;
+  return [...new Set(layers)]; // remove duplicates
 }
 
 // --- Detect user intent ---
@@ -73,72 +70,23 @@ function detectIntent(msg) {
   return "unknown";
 }
 
-// --- Merge updates with existing JSON ---
-function mergeUpdates(existingJson, data, userMessage, intent) {
-  const updatedJson = { ...existingJson };
-  const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPES"];
-
-  function normalizeName(name) {
-    return (name || "").toLowerCase().replace(/[\s_]+/g, "");
-  }
-
-  function getNextLayerName(layerType) {
-    const existing = updatedJson[layerType] || [];
-    let maxId = 0;
-    existing.forEach(item => {
-      const match = (item.dimensions?.layerName || "").match(new RegExp(`^${layerType}_(\\d+)$`));
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxId) maxId = num;
-      }
-    });
-    return `${layerType}_${(maxId + 1).toString().padStart(3, "0")}`;
-  }
-
-  for (const key of possibleLayers) {
-    if (!data[key]) continue;
-    if (!Array.isArray(updatedJson[key])) updatedJson[key] = [];
-
-    data[key].forEach(updateObj => {
-      if (intent === "update") {
-        // Update existing layer by name
-        const idx = updatedJson[key].findIndex(
-          l => normalizeName(l.dimensions?.layerName) === normalizeName(updateObj.dimensions?.layerName)
-        );
-        if (idx !== -1) {
-          updatedJson[key][idx] = {
-            ...updatedJson[key][idx],
-            dimensions: { ...updatedJson[key][idx].dimensions, ...updateObj.dimensions }
-          };
-          return;
-        }
-      }
-
-      // Create new layer if intent is create or no existing layer found
-      const newName = getNextLayerName(key);
-      updatedJson[key].push({
-        position: updateObj.position || [0, 0],
-        isVisible: updateObj.isVisible ?? true,
-        dimensions: { ...updateObj.dimensions, layerName: newName }
-      });
-    });
-  }
-
-  return updatedJson;
-}
-
-// --- Tiny template loader: loads templates/<name>.json from repo root ---
+// --- Templates directory ---
 const TEMPLATES_DIR = path.join(process.cwd(), "templates");
-function getTemplateByName(name) {
-  try {
-    const file = path.join(TEMPLATES_DIR, `${name.toLowerCase()}.json`);
-    if (!fs.existsSync(file)) return null;
-    const raw = fs.readFileSync(file, "utf8");
-    const parsed = JSON.parse(raw);
-    // We expect template content to live under parsed.content (as you've planned)
-    return parsed;
-  } catch (err) {
-    console.warn("template load failed:", err?.message || err);
+
+// --- Helper: load template by layer type ---
+function getTemplateByName(layerType) {
+  const filePath = path.join(TEMPLATES_DIR, `${layerType.toLowerCase()}.json`);
+
+  if (fs.existsSync(filePath)) {
+    try {
+      const content = fs.readFileSync(filePath, "utf-8");
+      return { content: JSON.parse(content) };
+    } catch (err) {
+      console.error(`❌ Failed to read template for ${layerType}:`, err.message);
+      return null;
+    }
+  } else {
+    console.warn(`⚠️ Template file not found for ${layerType} at ${filePath}`);
     return null;
   }
 }
@@ -311,6 +259,94 @@ function createDefaultLayer(userMessage, forcedLayerType) {
   return { [layerType]: [layer] };
 }
 
+// --- Merge updates with existing JSON ---
+function mergeUpdates(existingJson, data, userMessage, intent) {
+  const updatedJson = { ...existingJson };
+  const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPES"];
+
+  function normalizeName(name) {
+    return (name || "").toLowerCase().replace(/[\s_]+/g, "");
+  }
+
+  function getNextLayerName(layerType) {
+    const existing = updatedJson[layerType] || [];
+    let maxId = 0;
+    existing.forEach(item => {
+      const match = (item.dimensions?.layerName || "").match(new RegExp(`^${layerType}_(\\d+)$`));
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxId) maxId = num;
+      }
+    });
+    return `${layerType}_${(maxId + 1).toString().padStart(3, "0")}`;
+  }
+
+  for (const key of possibleLayers) {
+    if (!data[key]) continue;
+    if (!Array.isArray(updatedJson[key])) updatedJson[key] = [];
+
+    data[key].forEach(updateObj => {
+      if (intent === "update") {
+        // Update existing layer by name
+        const idx = updatedJson[key].findIndex(
+          l => normalizeName(l.dimensions?.layerName) === normalizeName(updateObj.dimensions?.layerName)
+        );
+        if (idx !== -1) {
+          updatedJson[key][idx] = {
+            ...updatedJson[key][idx],
+            dimensions: { ...updatedJson[key][idx].dimensions, ...updateObj.dimensions }
+          };
+          return;
+        }
+      }
+
+      // Create new layer if intent is create or no existing layer found
+      const newName = getNextLayerName(key);
+      updatedJson[key].push({
+        position: updateObj.position || [0, 0],
+        isVisible: updateObj.isVisible ?? true,
+        dimensions: { ...updateObj.dimensions, layerName: newName }
+      });
+    });
+  }
+
+  return updatedJson;
+}
+
+// --- Select relevant JSON based on user intent & message ---
+function getRelevantLayers(existingJson, selectedLayers, userMessage, intent) {
+  const relevant = {};
+  const normalizedMsg = userMessage.toUpperCase().replace(/\s+/g, ""); 
+  // e.g. "update zone a" → "UPDATEZONEA"
+
+  for (const layerType of selectedLayers) {
+    const allLayers = existingJson[layerType] || [];
+
+    if (intent === "update") {
+      // Collect all names (system + custom) from existingJson
+      const possibleNames = allLayers.map(l => 
+        (l.dimensions?.layerName || "").toUpperCase().replace(/[\s_]+/g, "")
+      );
+
+      // See if any of those names appear in the user message
+      const matched = allLayers.filter(l => {
+        const layerNameNorm = (l.dimensions?.layerName || "")
+          .toUpperCase()
+          .replace(/[\s_]+/g, "");
+        return normalizedMsg.includes(layerNameNorm);
+      });
+
+      relevant[layerType] = matched.length > 0 ? matched : allLayers;
+    } 
+    else if (intent === "create") {
+      // For create, just return empty for this type
+      relevant[layerType] = [];
+    }
+  }
+
+  return relevant;
+}
+
 // --- API Route Handler ---
 export async function POST(req) {
   try {
@@ -358,18 +394,33 @@ export async function POST(req) {
       }
     }
 
-    // --- SELECT TEMPLATE BASED ON USER INPUT (minimal change) ---
-    // Preference: explicit "use <TLOF|FATO|...>" in user message; otherwise parse from content.
-    const selectedLayers = mapLayersFromUserMessage(userMessage); // returns an array
-    const templates = selectedLayers
-  .map(layer => {
-    const templateObj = getTemplateByName(layer); // load each template
+    //Detect user intent
+   const intent = detectIntent(userMessage);  
+
+    // Step 2: --- SELECT TEMPLATE BASED ON CONTEXT ---
+let selectedLayers = [];
+if (intent === "create") {
+  selectedLayers = mapLayersFromUserMessage(userMessage); // keyword-based
+} else if (intent === "update") {
+  // For update, use top-level keys in existingJson
+  selectedLayers = Object.keys(existingJson); // <-- use existingJson, NOT relevantJson
+}
+
+//Get relevant JSON for these layers
+const relevantJson = getRelevantLayers(existingJson, selectedLayers, userMessage, intent);
+console.log("🟡 Relevant JSON:", JSON.stringify(relevantJson, null, 2));
+
+// Load templates for those canonical layer types
+const templates = selectedLayers
+  .map(layerType => {
+    const templateObj = getTemplateByName(layerType); // load each template by canonical type
     if (templateObj) {
-      console.log(`📄 Using template: ${layer} (from templates/${layer.toLowerCase()}.json)`);
+      console.log(`📄 Using template: ${layerType} (from templates/${layerType.toLowerCase()}.json)`);
+      return { layer: layerType, content: templateObj.content };
     } else {
-      console.log(`📄 No template file for ${layer}, filter will run without a template file.`);
+      console.log(`📄 No template file for ${layerType}, filter will run without a template file.`);
+      return null;
     }
-    return templateObj ? { layer, content: templateObj.content } : null;
   })
   .filter(Boolean); // remove nulls
   
@@ -384,7 +435,6 @@ export async function POST(req) {
 - Take the raw GPT-4 factual answer.
 - Keep the natural text explanation exactly (or correct if unsafe).
 - Extract structured parameters, extract dimension data from azure search or gpt-4 in 'meters' always.
-- ALWAYS RETURN FULL JSON OUTPUT.
 - Always return a single JSON object with this shape:
 
 {
@@ -411,12 +461,11 @@ Layer selection rules:
 
 RULES:
 - Aircraft dimensions must remain within published ranges.
-- For categorical fields (like tdpcColor, markingColor, markerColor, lightColor):
+- For all fields inside JSON layers:
   * Always update them if the user explicitly requests a change.
   * If the requested value is outside allowed options, replace with the nearest valid one and explain in "text".
 - When the user requests **new layers**, create full valid JSON with new layer names.
 - When the user requests **updates**, change only the required fields in the particular layerName.
-- Always use aircraft name along with layer name if mentioned by user or take from raw answer (Eg:TLOF_JobyS4) or if nothing found give 'layername_series' (Eg:TLOF_001 or FATO_001).
 - Never return FAA advisory text, long documents, or irrelevant data. Always return valid JSON.`;
 
       // If template exists, append it to prompt so filter enforces template structure
@@ -433,9 +482,11 @@ if (templates.length > 0) {
         model: process.env.AZURE_OPENAI_DEPLOYMENT_MINI,
         messages: [
           { role: "system", content: filterPromptBase + templateInstruction },
-          { role: "user", content: `User asked: ${userMessage}\n\nExisting JSON: ${JSON.stringify(existingJson)}\n\nRaw GPT-4 answer: ${rawAnswer}` },
+          { role: "user", content: `User asked: ${userMessage}
+          Relevant JSON: ${JSON.stringify(relevantJson)}
+          Raw GPT-4 answer: ${rawAnswer}` },
         ],
-        max_tokens: 1700,
+        max_tokens: 700,
         temperature: 0.3,
       });
 
@@ -461,7 +512,6 @@ if (templates.length > 0) {
     }
 
     // --- Step 4: Merge AI updates into existing JSON safely ---
-    const intent = detectIntent(userMessage);
     const updatedJson = mergeUpdates(existingJson, data, userMessage, intent);
   
 
