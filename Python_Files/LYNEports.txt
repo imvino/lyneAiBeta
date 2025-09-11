@@ -1,0 +1,105 @@
+
+
+🌐 LYNEports Overview
+LYNEports is redefining airside and aviation infrastructure planning through AI-powered, intuitive, and collaborative software. The platform streamlines the planning, design, and simulation of Urban Air Mobility (UAM) and aerodrome infrastructure, addressing the limitations of traditional planning tools.
+
+🚀 Core Solutions & Features
+✈️ LYNEports Aerospace Planning
+Plan using airspace maps, aircraft libraries, site suitability tools, and demand analysis.
+
+🏙️ LYNEports Land Use Planning
+Design using drag & drop features, wind data, and detailed reporting tools.
+
+🌍 LYNEports Urban Project Planning
+Simulate flight paths, downwash & outwash effects, and visualize 3D airspace in real time.
+
+🔧 Key Platform Features
+Multiple Data Integration
+
+Charging Station Design
+
+Downwash / Outwash Simulation
+
+3D Airspace Modeling
+
+Real-Time Simulations
+
+Terrain Data
+
+50+ Aircraft Types
+
+Ground Operations Planning
+
+AI-Generated Reports
+
+Noise Profiling
+
+Adaptive Airside Design
+
+AI Assistant
+
+Flight Corridors & Flight Simulation
+
+Wind Data Analysis
+
+🧠 Who LYNEports Is Built For
+Urban Planners, Architects, Engineers
+
+Smarter aviation design via built-in compliance tools and 3D modeling—no extra software needed.
+
+Aircraft Operators, Airports, Developers
+
+Accelerated planning, site validation, and scalable infrastructure simulation.
+
+City Planners & Aviation Authorities
+
+Real-time insights into compliance, site suitability, and integration with existing airspace regulations.
+
+*********** Tom meeting ***********
+
+
+https://learn.microsoft.com/en-us/microsoft-for-startups/maas-startups
+Model as a Service on Credits FAQ | Microsoft Learn
+This article features frequently asked questions about Models as a Service credits.
+ 
+Deploy a fine-tuned model
+https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/fine-tuning-deploy?tabs=portal
+Deploy a fine-tuned model - Azure OpenAI | Microsoft Learn
+Learn how to deploy your fine-tuned model with Azure OpenAI in Azure AI Foundry Models by using Python, the REST APIs, or Azure AI Foundry portal.
+ 
+https://www.youtube.com/watch?v=hw6-rrYtUy8
+ 
+Step by step guide finetuned GPT models https://www.youtube.com/watch?v=jLpU3gyjNVQ
+ 
+https://learn.microsoft.com/en-us/azure/search/search-howto-indexing-azure-blob-storage
+Azure blob indexer - Azure AI Search | Microsoft Learn
+Set up an Azure blob indexer to automate indexing of blob content for full text search operations and knowledge mining in Azure AI Search.
+ 
+https://learn.microsoft.com/en-us/azure/search/search-howto-indexing-azure-blob-storage#handle-errors
+Azure blob indexer - Azure AI Search | Microsoft Learn
+Set up an Azure blob indexer to automate indexing of blob content for full text search operations and knowledge mining in Azure AI Search.
+ 
+service tiers
+https://learn.microsoft.com/en-us/azure/search/search-create-service-portal#choose-a-tier
+Create a Search Service in the Azure Portal - Azure AI Search | Microsoft Learn
+Learn how to set up an Azure AI Search resource in the Azure portal. Choose resource groups, regions, and a pricing tier.
+
+
+Grab some time with the team here! https://cal.com/team/scout/welcome
+
+
+https://docs.scoutos.com/api-sdk/endpoints/workflows/create-revision
+
+Wyatt@welcomestranger.ai
+
+
+Rasha Alshami <rashaalshami@lyneports.com>
+Praveen Subramani <praveen.s@lyneports.com>,
+Dhanalakshmi Mohan <dhana.m@lyneports.com>
+
+
+**********
+
+
+Azure AI Foundry | Azure OpenAI > Model catalog > Create a project to get more models - find mini models to fast execeution and less cost, note : 3rd party could have extra cost like mistral.
+link - https://ai.azure.com/explore/models?tid=5791ec9b-a85c-4ed9-a536-b32ff076523a

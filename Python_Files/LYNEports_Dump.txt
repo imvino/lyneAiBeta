@@ -1,0 +1,390 @@
+{
+        "id": "TLOF-1751017011348",
+        "groupId": null,
+        "position": [
+          -83.10600257367422,
+          42.33743427934414
+        ],
+        "isVisible": true,
+        "layerName": "D_TLOF",
+        "dimensions": {
+
+#Shape
+	"sides": 4,
+	"width": 30,
+
+
+	"length": 30,
+	"height": 0.01,
+	"rotation": 0,
+	"transparency": 1,
+	"baseHeight": 0,
+
+#Landing Marker
+	"landingMarkerCategory": true,
+	"landingMarker": "H",
+	"markerScale": 1,
+	"markerThickness": 0.02,
+	"letterThickness": 0.5,
+	"markerRotation": 0,
+	"markerColor": "white",
+
+#TDPC Marking
+	"tdpcCategory": true,
+	"tdpcType": "circle",
+	"tdpcScale": 5,
+	"tdpcThickness": 0.5,
+	"tdpcExtrusion": 0.02,
+	"tdpcRotation": 0,
+	"tdpcColor": "white",
+
+ #Lighting
+	"lightCategory": false,
+	"lightColor": "white",
+	"lightScale": 1,
+	"lightDistance": 1,
+	"lightRadius": 0.3,
+	"lightHeight": 0.2,
+
+
+#Safety Area
+	"safetyAreaCategory": false,
+	"safetyAreaType": "multiplier",
+	"dValue": 10,
+	"multiplier": 1.5,
+	"offsetDistance": 3,
+
+#Safety Net
+	"safetyNetCategory": false,
+	"curveAngle": 45,
+	"netHeight": 15,
+	"safetyNetTransparency": 0.5
+
+
+#Others
+          
+	"aircraft": null,
+	"diameter": 30,
+	"isVisible": true,
+	"layerName": "D_TLOF",
+	"shapeType": "Rectangle",
+	"dashLength": 1,    
+	"markingType": "dashed",
+	"dashDistance": 1,
+	"markingColor": "white",
+	"scaleCategory": false,
+	"textureScaleU": 1,
+	"textureScaleV": 1,
+	"vertipadColor": "#808080",
+	"safetyNetColor": "#FF0000",
+	"safetyNetScaleU": 1,
+	"safetyNetScaleV": 1,
+	"aircraftCategory": false,
+	"markingThickness": 0.5,
+	"markingsCategory": false,
+        },
+        "layerOrder": 0
+      }
+
+
+"tdpcCategory": true,
+"landingMarkerCategory": true,
+
+
+
+
+
+
+
+
+am i fine tuning the right way, 
+how are the cost which model to use or not
+can we download the fientuned model
+*********************************
+
+
+
+
+
+
+*********************************
+
+Nice — let’s build the fast path: Azure AI Search (Cognitive Search) + LangChain with minimal ops so you can have a working RAG (retrieval-augmented generation) pipeline quickly. Below is a practical, copy-pasteable, step-by-step guide (resources, commands, and runnable Python snippets). I’ll call out where you can swap to a more controlled/custom approach later.
+
+---
+
+# 1) Quick overview (what we’ll create)
+
+1. Upload documents to Azure Blob Storage or load locally.
+2. Create an Azure AI Search (Cognitive Search) index that stores vectors (either via portal “Import & vectorize” or by pushing vectors yourself). ([Microsoft Learn][1], [GitHub][2])
+3. Use LangChain as the orchestrator: load docs, chunk, embed (Azure OpenAI embeddings or your embeddings), push to Azure Search, then run a retrieval → LLM chain using Azure OpenAI. ([LangChain][3])
+
+---
+
+# 2) Prerequisites
+
+* Azure subscription with permissions to create resources. (Owner/Contributor to request quotas). ([Microsoft Learn][1])
+* Provisioned resources:
+
+  * Azure AI Search (aka Azure Cognitive Search / Azure AI Search). ([Microsoft Learn][1])
+  * Azure Storage (Blob) for storing docs if you want automated indexing/indexers. ([Microsoft Learn][1])
+  * (Optional but recommended) Azure OpenAI resource + model deployments for embeddings + LLMs (or any other embedding/LLM provider). ([LangChain][4])
+* Local dev environment: Python 3.9+.
+
+Recommended packages (quick install):
+
+```bash
+python -m venv venv && source venv/bin/activate
+pip install -U langchain langchain-community langchain-openai \
+            azure-search-documents azure-identity \
+            langchain-text-splitters pypdf
+# optional / depending on loaders: unstructured, pypdf, python-docx, etc.
+```
+
+(Exact packages and versions matter — LangChain docs recommend `azure-search-documents >= 11.4.0` for vector support.) ([LangChain][3])
+
+---
+
+# 3) Create Azure resources (portal or CLI)
+
+Portal (fast):
+
+* Create Azure AI Search via “Create a resource → Azure AI Search” and pick a region/tier. Note region constraints for AI enrichment. ([Microsoft Learn][1])
+
+CLI (if you prefer):
+
+```bash
+az group create -n my-rg -l eastus
+az search service create --name my-search-service --resource-group my-rg --sku free --location eastus
+# get admin key:
+az search admin-key show --service-name my-search-service --resource-group my-rg
+```
+
+(See Azure CLI docs for `az search service create` and retrieving keys). ([Microsoft Learn][5], [PyPI][6])
+
+Also create a Storage Account if you plan to use an indexer that reads blobs: `az storage account create ...` and create a blob container. ([Microsoft Learn][1])
+
+---
+
+# 4) Two ingestion approaches — pick one now
+
+## A — No-code / minimal ops: use Azure AI Search indexer (portal) to *import & vectorize*
+
+Best if you want the shortest path: upload docs to Blob Storage, then use the Azure portal’s “Import and vectorize (Preview)” or create a data source + indexer + skillset that extracts text and runs vectorization during indexing. This removes embedding/ingestion code from your stack. Good for quick results and enterprise features (OCR, built-in enrichment). ([GitHub][2], [Microsoft Learn][7])
+
+Pros: fastest, managed indexing, built-in AI enrichment.
+Cons: less control over chunking/embedding details and slightly more expensive in large scale.
+
+Docs / samples: Azure vector quickstarts & demo repo. ([GitHub][2], [Microsoft Learn][8])
+
+---
+
+## B — Custom ingestion (more control): extract → chunk → embed → upload vectors to Azure Search
+
+Good if you want custom chunk sizes, custom embedding model, metadata, or pre/post processing.
+
+High-level steps:
+
+1. Load & extract text (LangChain loaders: `PyPDFLoader`, `UnstructuredPDFLoader`, `TextLoader`, etc.). ([LangChain][9])
+2. Split into chunks (e.g., 500–1,000 tokens or \~750 chars; overlap 50–150 chars). Use `langchain-text-splitters`. ([LangChain][10])
+3. Create embeddings (Azure OpenAI embeddings deployment or other). ([LangChain][4])
+4. Push documents + embeddings into an Azure Search index (vector field). You can use the `AzureSearch`/`AzureAISearchRetriever` integrations in `langchain-community` to automate index creation and ingestion. ([LangChain][3])
+
+Example (adapted from LangChain docs) — end-to-end Python (custom ingestion):
+
+```python
+import os
+from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_openai import AzureOpenAIEmbeddings, AzureChatOpenAI
+from langchain_community.vectorstores import AzureSearch
+from langchain_community.retrievers import AzureAISearchRetriever
+from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
+
+# env vars (set these with your values)
+os.environ["AZURE_AI_SEARCH_SERVICE_NAME"] = "<your-search-service-name>"  # endpoint name (service name)
+os.environ["AZURE_AI_SEARCH_INDEX_NAME"] = "langchain-vector-demo"
+os.environ["AZURE_AI_SEARCH_API_KEY"] = "<your-search-admin-key>"
+
+AZURE_OPENAI_ENDPOINT = "https://<your-azure-openai>.openai.azure.com"
+AZURE_OPENAI_KEY = "<your-azure-openai-key>"
+AZURE_EMBED_DEPLOYMENT = "<embedding-deployment-name>"  # e.g., text-embedding-3-large
+
+# 1) Load documents
+loader = DirectoryLoader("./docs", glob="/*.pdf", loader_cls=PyPDFLoader)
+documents = loader.load()
+
+# 2) Chunk
+splitter = CharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+docs = splitter.split_documents(documents)
+
+# 3) Embeddings: AzureOpenAIEmbeddings (you must have an embedding deployment)
+embeddings = AzureOpenAIEmbeddings(
+    azure_deployment=AZURE_EMBED_DEPLOYMENT,
+    azure_endpoint=AZURE_OPENAI_ENDPOINT,
+    openai_api_key=AZURE_OPENAI_KEY,
+)
+
+# 4) Create or connect AzureSearch vector store (this creates index for you)
+vector_store = AzureSearch(
+    azure_search_endpoint=os.getenv("AZURE_AI_SEARCH_SERVICE_NAME"),
+    azure_search_key=os.getenv("AZURE_AI_SEARCH_API_KEY"),
+    index_name=os.getenv("AZURE_AI_SEARCH_INDEX_NAME"),
+    embedding_function=embeddings.embed_query,  # function to produce embeddings
+)
+
+# 5) Add documents (this will create index schema and upload embeddings)
+vector_store.add_documents(documents=docs)
+
+# 6) Create retriever (LangChain wrapper)
+retriever = AzureAISearchRetriever(content_key="content", top_k=4, index_name=os.getenv("AZURE_AI_SEARCH_INDEX_NAME"))
+
+# 7) LLM for answer generation (AzureChatOpenAI)
+llm = AzureChatOpenAI(azure_deployment="<llm-deployment-name>", temperature=0.0, max_tokens=1000)
+
+# 8) Build retrieval chain and use it
+combine_chain = create_stuff_documents_chain(llm)
+retrieval_chain = create_retrieval_chain(retriever=retriever, combine_docs_chain=combine_chain)
+
+resp = retrieval_chain.invoke({"input": "Give me a short summary of the process to onboard a new customer from the docs."})
+print(resp["answer"])
+```
+
+This example follows LangChain docs and Azure integrations. Adjust deployment names to whatever you created in Azure. ([LangChain][3])
+
+---
+
+# 5) Helpful production details & best practices
+
+* Auth & Secrets: use Managed Identity / Azure AD instead of copying admin keys into environment variables for production. (LangChain + Azure SDKs support AAD). ([LangChain][4])
+* Index updates & deletes: plan for incremental updates. Azure Search supports merge/upsert operations (via REST/SDK). The `azure-search-documents` SDK docs show how to upload/update docs. ([Microsoft Learn][11])
+* Chunk size: 500–1,000 tokens (or 400–800 chars) is a common sweet spot. Too large → context waste; too small → loss of coherence. Use overlap to preserve context. ([LangChain][10])
+* Hybrid queries: Azure AI Search supports hybrid keyword + vector queries — useful for precise filtering (metadata) + semantic recall. ([Microsoft Learn][12])
+* Cost: embeddings + LLM calls are the main cost. Using Azure’s managed indexing saves dev time but can add to costs. Monitor usage & set quotas/alerts. ([Microsoft Learn][1])
+* Security & compliance: ensure your service region supports AI enrichment and check compliance needs (GDPR, HIPAA) for your workload. ([Microsoft Learn][1])
+
+---
+
+# 6) Debugging / gotchas
+
+* API version mismatches: Azure Search API versions changed; LangChain retriever targets a stable API (check docs). If you get errors creating vector indexes, verify the SDK & REST API versions. ([LangChain][13], [GitHub][2])
+* Embedding model names: use the exact deployment name you created in Azure OpenAI — different model names may be required (text-embedding-3-\*, text-embedding-ada-002 historically). ([LangChain][4])
+* Permissions: if using indexers that read Blob Storage, ensure the Search service has access to the Storage account (connection string / managed identity) and region compatibility. ([Microsoft Learn][1])
+
+---
+
+# 7) Minimal checklist to get a working prototype (copy & run)
+
+1. Create: Azure AI Search service + Storage + (optional) Azure OpenAI. ([Microsoft Learn][1], [LangChain][4])
+2. Install packages (pip).
+3. Upload a few sample docs to `./docs` or to blob storage.
+4. Run the custom ingestion Python snippet above (set env vars).
+5. Run a simple query via the retrieval chain.
+
+---
+
+# 8) Links I used / further reading (important docs & samples)
+
+* LangChain Azure AI Search vectorstore integration (how-to + code). ([LangChain][3])
+* LangChain AzureAISearchRetriever docs (retriever usage, env vars). ([LangChain][13])
+* Azure AI Search (vector search overview & REST API). ([Microsoft Learn][12])
+* Azure azure-search-vector-samples repo (end-to-end samples). ([GitHub][2])
+* LangChain Azure OpenAI integration (how to configure embeddings & chat LLM). ([LangChain][4])
+
+---
+
+If you want, I can now:
+
+* produce a ready-to-run repo (Python) for your environment (I’ll need the types of docs you have: PDFs, DOCX, scanned images — so I can pick loaders and OCR steps), or
+* give a variant that uses the portal indexer (zero-code ingestion) with exact portal steps and screenshots, or
+* help you map costs & quotas for a given corpus size (number of docs, average size in pages/KB).
+
+Which of those would help you most next?
+
+[1]: https://learn.microsoft.com/en-us/azure/search/search-create-service-portal?utm_source=chatgpt.com "Create an Azure AI Search service in the Azure portal"
+[2]: https://github.com/Azure/azure-search-vector-samples "GitHub - Azure/azure-search-vector-samples: A repository of code samples for Vector search capabilities in Azure AI Search."
+[3]: https://python.langchain.com/docs/integrations/vectorstores/azuresearch/ "Azure AI Search | ️ LangChain"
+[4]: https://python.langchain.com/docs/integrations/llms/azure_openai/ "Azure OpenAI | ️ LangChain"
+[5]: https://learn.microsoft.com/en-us/cli/azure/search/service?view=azure-cli-latest&utm_source=chatgpt.com "az search service"
+[6]: https://pypi.org/project/azure-search-documents/?utm_source=chatgpt.com "azure-search-documents"
+[7]: https://learn.microsoft.com/en-us/azure/search/cognitive-search-working-with-skillsets?utm_source=chatgpt.com "Azure AI Search - Skillset concepts"
+[8]: https://learn.microsoft.com/en-us/azure/search/search-get-started-vector?utm_source=chatgpt.com "Quickstart: Vector Search - Azure AI Search"
+[9]: https://python.langchain.com/docs/integrations/document_loaders/?utm_source=chatgpt.com "Document loaders"
+[10]: https://python.langchain.com/docs/concepts/text_splitters/?utm_source=chatgpt.com "Text splitters"
+[11]: https://learn.microsoft.com/en-us/python/api/overview/azure/search-documents-readme?view=azure-python&utm_source=chatgpt.com "Azure AI Search client library for Python"
+[12]: https://learn.microsoft.com/en-us/azure/search/vector-search-overview?utm_source=chatgpt.com "Vector search - Azure AI Search"
+[13]: https://python.langchain.com/docs/integrations/retrievers/azure_ai_search/ "AzureAISearchRetriever | ️ LangChain"
+
+
+
+*************
+
+Which document formats can Azure AI Search index directly, and which need preprocessing?
+Should we use built-in vectorization or generate embeddings ourselves for more control?
+What’s the best way to update documents without re-indexing everything?
+How does vector search performance scale with millions of documents?
+What’s the expected latency for vector search with filters?
+Can we combine keyword search with vector search effectively?
+What are the max vector dimensions and document size limits?
+How should we choose between Azure’s embedding models for our use case?
+Does Azure AI Search support managed identities with LangChain?
+Which compliance certifications does the service meet in our chosen region?
+How is pricing calculated for vector indexes and queries?
+What quotas or limits could block us in production?
+How do we monitor performance and indexing errors?
+What’s the disaster recovery and region replication strategy?
+
+
+dar ventor akas 
+
+
+*********************
+
+
+below are the task so recommend me how to do:
+
+
+
+
+azure conotise searc output to be furnisted and in simple words so other aganet should understand
+genreal aganet or fucnstion where it will understand the user prompt and decide which one to call tlof or fato or etc
+add memoery
+finsla is agent will check the output and ask user if there is anything lissing or douabts
+
+no need to store in supabase
+
+1. LangChain Agent – central brain.  
+2. Memory – `ConversationBufferMemory` (do not use `ConversationSummaryMemory`) to remember previous messages.  
+3. Tools/Functions:  
+   - `create_geometry(data: dict)` → returns JSON  (Define each geometry as a Pydantic class with validation)
+   - `update_geometry(id: str, key: str, value: any)` → modifies JSON in Supabase  
+   - `query_aviation_knowledge(question: str)` → optional: use OpenAI or a vector store  
+4. Supabase – store JSON geometries and possibly conversation logs.  
+5. JSON Schema Validation – ensure created/updated JSON is valid for your aviation geometries.  
+
+---
+
+## 3️⃣ Flow Example
+
+1. User: “Create a TLOF for Flight ABC with length 30m and width 30m.”  
+2. Agent detects intent → calls `create_geometry` → saves to Supabase → returns JSON.  
+3. User: “Update TLOF width to 35m.”  
+4. Agent detects update intent → calls `update_geometry` → modifies only width in Supabase.  
+5. User: “What is the standard width for a helipad?”  
+6. Agent detects Q&A intent → fetches answer from knowledge base or LLM → responds.  
+
+---
+
+## 4️⃣ Python + LangChain Setup
+
+- Agent: `initialize_agent` with `tools=[create, update, query]`  
+- Memory: `ConversationBufferMemory`  
+- Supabase: Python client `supabase-py`  
+- JSON handling: Pydantic models or plain dicts with validation  
+
+
+
+****************
+
+project_id - 1756812216478

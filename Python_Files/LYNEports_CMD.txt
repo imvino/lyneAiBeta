@@ -1,0 +1,69 @@
+cd C:\_IESEG\_Internship\_Lyneports\_LyneportProject
+conda activate Lynepots_env
+jupyter notebook
+
+
+
+
+
+
+
+
+
+####################
+
+
+
+
+
+
+
+Design a circular TLOF for a medium helicopter with a 20-meter diameter, positioned at coordinates [31.9686° N, 99.9018° W]. Use white solid markings with 0.8 thickness. Place a red 'H' marker at the center with a scale of 5 and rotation of 45 degrees.
+
+
+
+Project URL
+https://lxoixegqbfvexhfhxcro.supabase.co
+
+
+
+
+regulation_embd - table name
+This table stores chunked regulation text (e.g., FAA, EASA, DGCA documents) along with their vector embeddings for semantic search and retrieval in aviation compliance, example TLOF (Touchdown and Lift-Off Area) design assistance.
+regulator_code text not null,         -- e.g. 'faa', 'easa', 'dgca'
+content text not null,                -- chunked regulation text
+metadata jsonb,                       -- source filename, page number, etc.
+embedding vector(1536) not null       
+
+
+select * from regulation_embd;
+
+
+
+what is the measurment for Relationship and Dimensions of TLOF, FATO, and Safety Area (Non-420 
+powered-lift)
+
+
+act as an AI developer 
+
+i want ot build an chatbot where it is realted to avaiation and the company design the landing and road and helipad etc which is in json format
+2. he has flight county regualtion like faa pdf why we are using is that we need to read and based on latest reconmendation and suggeston based on the country the output json should be created i mean if siwe of landing pad is 20 lenght and breath then but it should be only 15 as per faa resulagation then llm should be based make adjedtiona and the finak outout should be no more than 15.
+3. it should have memory so users can make conversations.
+4. it should answer genreatl qoestions, create or update json formaat 
+
+
+how can i create it i know python and langchain
+
+****** Without RAG *******
+Act as an AI developer 
+
+I want to build a chatbot related to aviation. The company designs landing areas, roads, helipads, etc., which are stored in JSON format. The chatbot should:
+Have memory so users can have multi-turn conversations.
+Answer general aviation questions.
+Create or update JSON data for aviation geometries.
+Possible user inputs could be:
+Create a TLOF or any other geometry using provided values for a specific flight or airplane in JSON format.
+Update a TLOF or any other geometry by modifying only a single value instead of creating the entire JSON.
+Answer general questions about aviation.
+The chatbot should save the JSON data in a Supabase database.
+I know Python and LangChain. How can I create this?

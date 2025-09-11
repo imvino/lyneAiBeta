@@ -1,0 +1,141 @@
+[
+  {
+    "FATO": [
+      {
+        "position": [
+          -83.1060905637281,
+          42.33747509661933
+        ],
+        "dimensions": {
+          "unit": "m",
+          "sides": 17,
+          "width": 30,
+          "dValue": 10,
+          "height": 0.72,
+          "length": 30,
+          "aircraft": null,
+          "diameter": 26.43,
+          "rotation": 72.67,
+          "isVisible": true,
+          "layerName": "Praveen_GEOMETRY",
+          "netHeight": 15,
+          "shapeType": "Polygon",
+          "baseHeight": 67.16,
+          "curveAngle": 45,
+          "dashLength": 1,
+          "lightColor": "green",
+          "lightScale": 1,
+          "multiplier": 1.5,
+          "lightHeight": 0.2,
+          "lightRadius": 0.3,
+          "markingType": "dashed",
+          "dashDistance": 1,
+          "markingColor": "white",
+          "transparency": 0.71,
+          "lightCategory": false,
+          "lightDistance": 1,
+          "scaleCategory": false,
+          "textureScaleU": 1,
+          "textureScaleV": 1,
+          "vertipadColor": "#808080",
+          "offsetDistance": 3,
+          "safetyAreaType": "multiplier",
+          "safetyNetColor": "#FF0000",
+          "safetyNetScaleU": 1,
+          "safetyNetScaleV": 1,
+          "aircraftCategory": false,
+          "markingThickness": 0.5,
+          "markingsCategory": false,
+          "safetyNetCategory": false,
+          "safetyAreaCategory": false,
+          "safetyNetTransparency": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "TLOF": [
+      {
+        "position": [
+          -83.1065634111835,
+          42.337917752514244
+        ],
+        "dimensions": {
+          "sides": 6,
+          "width": 30,
+          "dValue": 10,
+          "height": 0.01,
+          "length": 30,
+          "aircraft": null,
+          "diameter": 37.57,
+          "rotation": 25.79,
+          "tdpcType": "circle",
+          "isVisible": true,
+          "layerName": "Praveen_TLOF",
+          "netHeight": 15,
+          "shapeType": "Polygon",
+          "tdpcColor": "white",
+          "tdpcScale": 5,
+          "baseHeight": 0,
+          "curveAngle": 45,
+          "dashLength": 1,
+          "lightColor": "white",
+          "lightScale": 1,
+          "multiplier": 1.5,
+          "lightHeight": 0.2,
+          "lightRadius": 0.3,
+          "markerColor": "green",
+          "markerScale": 2.7,
+          "markingType": "dashed",
+          "dashDistance": 1,
+          "markingColor": "white",
+          "tdpcCategory": false,
+          "tdpcRotation": 0,
+          "transparency": 1,
+          "landingMarker": "H",
+          "lightCategory": false,
+          "lightDistance": 1,
+          "scaleCategory": false,
+          "tdpcExtrusion": 0.02,
+          "tdpcThickness": 0.5,
+          "textureScaleU": 1,
+          "textureScaleV": 1,
+          "vertipadColor": "#808080",
+          "markerRotation": 45.9,
+          "offsetDistance": 3,
+          "safetyAreaType": "multiplier",
+          "safetyNetColor": "#FF0000",
+          "letterThickness": 1.49,
+          "markerThickness": 0.04,
+          "safetyNetScaleU": 1,
+          "safetyNetScaleV": 1,
+          "aircraftCategory": false,
+          "markingThickness": 0.5,
+          "markingsCategory": false,
+          "safetyNetCategory": false,
+          "safetyAreaCategory": false,
+          "landingMarkerCategory": true,
+          "safetyNetTransparency": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "TAXIWAY": []
+  },
+  {
+    "SHAPE": []
+  },
+  {
+    "MODEL": []
+  },
+  {
+    "VOLUME": []
+  },
+  {
+    "FLIGHTPATH": []
+  },
+  {
+    "BUILDING": {}
+  }
+]

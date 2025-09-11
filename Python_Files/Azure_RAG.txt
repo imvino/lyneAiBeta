@@ -1,0 +1,222 @@
+I'll walk you through the steps to set up RAG in Azure using the Azure Portal UI and applications.
+
+## Step 1: Create Azure AI Search Service
+
+**Via Azure Portal:**
+
+1. **Navigate to Azure Portal** (portal.azure.com)
+2. **Create a Resource**
+   - Click "Create a resource"
+   - Search for "Azure AI Search" (formerly Cognitive Search)
+   - Click "Create"
+
+3. **Configure the Service**
+   - **Subscription**: Select your subscription
+   - **Resource Group**: Create new or select existing
+   - **Service Name**: Enter unique name (e.g., "my-rag-search")
+   - **Location**: Choose region close to you
+   - **Pricing Tier**: 
+     - Free tier: Good for testing (50 MB storage, 3 indexes)
+     - Basic/Standard: For production use
+
+4. **Review and Create**
+   - Click "Review + Create"
+   - Click "Create" after validation
+
+## Step 2: Create Azure OpenAI Service (Optional but Recommended)
+
+**Via Azure Portal:**
+
+1. **Create Azure OpenAI Resource**
+   - Search for "Azure OpenAI"
+   - Click "Create"
+   - Fill in details (subscription, resource group, name, region)
+   - Click "Create"
+
+2. **Deploy Models**
+   - Go to your Azure OpenAI resource
+   - Click "Go to Azure OpenAI Studio"
+   - Navigate to "Deployments"
+   - Create deployments for:
+     - **GPT-4 or GPT-3.5-turbo** (for chat/completion)
+     - **text-embedding-ada-002** (for embeddings)
+
+## Step 3: Create Storage Account for Documents
+
+**Via Azure Portal:**
+
+1. **Create Storage Account**
+   - Search for "Storage accounts"
+   - Click "Create"
+   - Configure:
+     - **Name**: Unique storage name
+     - **Performance**: Standard
+     - **Redundancy**: LRS (for testing)
+   - Click "Create"
+
+2. **Create Container**
+   - Go to your storage account
+   - Navigate to "Containers"
+   - Click "+ Container"
+   - Name it "documents"
+   - Set access level to "Private"
+
+## Step 4: Upload Documents to Storage
+
+**Via Azure Portal:**
+
+1. **Upload Files**
+   - Go to your storage account
+   - Navigate to "Containers" → "documents"
+   - Click "Upload"
+   - Select your PDF, Word, or text files
+   - Click "Upload"
+
+**Supported file formats:**
+- PDF, DOCX, PPTX, TXT, HTML, JSON, CSV
+
+## Step 5: Create Data Source in Azure AI Search
+
+**Via Azure Portal:**
+
+1. **Navigate to AI Search Service**
+   - Go to your AI Search resource
+   - Click "Import data" wizard
+
+2. **Connect to Data Source**
+   - **Data Source**: Select "Azure Blob Storage"
+   - **Data source name**: "documents-datasource"
+   - **Connection string**: 
+     - Go to your storage account
+     - Navigate to "Access keys"
+     - Copy connection string
+     - Paste in AI Search
+   - **Container name**: "documents"
+   - Click "Next"
+
+## Step 6: Add Cognitive Skills (Optional)
+
+**In Import Data Wizard:**
+
+1. **Add Enrichments**
+   - **Skillset name**: "document-skillset"
+   - **Enable OCR**: For image text extraction
+   - **Extract key phrases**: Check this
+   - **Extract entities**: Check this
+   - **Detect language**: Check this
+   - Click "Next"
+
+## Step 7: Customize Target Index
+
+**In Import Data Wizard:**
+
+1. **Configure Index**
+   - **Index name**: "documents-index"
+   - **Key field**: Usually "metadata_storage_path"
+   - **Suggester**: Optional
+   - **CORS**: Enable if needed for web apps
+
+2. **Field Mappings**
+   - Ensure key fields are marked as:
+     - **Retrievable**: Can be returned in results
+     - **Filterable**: Can be filtered on
+     - **Searchable**: Can be searched
+     - **Facetable**: Can be used for faceting
+
+3. **Click "Next" then "Create"**
+
+## Step 8: Monitor Indexing
+
+**Via Azure Portal:**
+
+1. **Check Indexer Status**
+   - Go to AI Search service
+   - Navigate to "Indexers"
+   - Check the status of your indexer
+   - View any errors or warnings
+
+2. **Test Search**
+   - Navigate to "Indexes"
+   - Click on your index
+   - Use "Search explorer" to test queries
+
+## Step 9: Set Up Azure AI Studio (Recommended Approach)
+
+**Via Azure AI Studio:**
+
+1. **Navigate to Azure AI Studio** (ai.azure.com)
+2. **Create New Project**
+   - Click "New project"
+   - Select your Azure OpenAI resource
+   - Configure project settings
+
+3. **Add Data Source**
+   - Go to "Data" section
+   - Click "Add data source"
+   - Select "Azure AI Search"
+   - Connect to your search service and index
+
+4. **Create Chat Application**
+   - Go to "Chat" playground
+   - Add your data source
+   - Configure system message
+   - Test your RAG setup
+
+## Step 10: Alternative - Use Azure AI Search Studio
+
+**Via Search Studio:**
+
+1. **Access Search Studio**
+   - From your AI Search service in Azure Portal
+   - Click "Search explorer" or go to search management portal
+
+2. **Create Index via UI**
+   - Use the visual index designer
+   - Define fields and their properties
+   - Set up analyzers and scoring profiles
+
+## Step 11: Test Your RAG Setup
+
+**Via Azure AI Studio:**
+
+1. **Chat Interface**
+   - Ask questions about your documents
+   - Example: "What are the main topics in the uploaded documents?"
+   - Review sources and citations
+
+2. **Tune Parameters**
+   - Adjust search parameters
+   - Modify system prompts
+   - Configure citation formats
+
+## Step 12: Create Web App (Optional)
+
+**Via Azure Portal:**
+
+1. **Deploy Sample App**
+   - Go to your Azure OpenAI resource
+   - Look for "Deploy to Web App" option
+   - Or use Azure App Service to deploy custom app
+
+2. **Configure Authentication**
+   - Set up authentication if needed
+   - Configure CORS settings
+
+## Key Azure Services You'll Use:
+
+1. **Azure AI Search** - Document indexing and search
+2. **Azure OpenAI** - LLM and embeddings
+3. **Azure Storage** - Document storage
+4. **Azure AI Studio** - RAG orchestration and testing
+5. **Azure App Service** - Web app deployment (optional)
+
+## UI Tools Available:
+
+- **Azure Portal** - Main management interface
+- **Azure AI Studio** - AI-focused interface for RAG
+- **Search Studio** - Search service management
+- **Storage Explorer** - File management tool
+
+This approach using Azure's UI tools makes it much easier to set up RAG without writing code initially. You can then integrate with LangChain or other frameworks once your Azure infrastructure is ready.
+
+Would you like me to elaborate on any specific step or show you how to integrate this with LangChain after the Azure setup is complete?

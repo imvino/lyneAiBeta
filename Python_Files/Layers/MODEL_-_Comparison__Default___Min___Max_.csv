@@ -1,0 +1,9 @@
+,Default,Min,Max
+aircraft,1,,
+isVisible,True,True,True
+layerName,MODEL LIBRARY_Aircraft_Default,MODEL LIBRARY_Min,MODEL LIBRARY_Max
+baseHeight,0,0,1000
+modelScale,1,0.01,50
+modelCustom,,,
+modelCategory,Aircraft,Tree,Charging
+modelRotation,0,0,359

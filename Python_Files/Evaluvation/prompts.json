@@ -1,0 +1,5 @@
+[
+  {"id": 1, "prompt": "Create a circular TLOF for a drone at 100m elevation."},
+  {"id": 2, "prompt": "Design a rectangular TLOF for a medium helicopter with yellow dashed markings."},
+  {"id": 3, "prompt": "Set up a polygonal TLOF with lighting and a safety net on a high-rise building."}
+]
