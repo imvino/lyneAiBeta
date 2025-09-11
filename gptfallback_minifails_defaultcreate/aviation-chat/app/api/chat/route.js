@@ -323,23 +323,20 @@ function getRelevantLayers(existingJson, selectedLayers, userMessage, intent) {
     const allLayers = existingJson[layerType] || [];
 
     if (intent === "update") {
-      // Collect all names (system + custom) from existingJson
-      const possibleNames = allLayers.map(l => 
-        (l.dimensions?.layerName || "").toUpperCase().replace(/[\s_]+/g, "")
-      );
-
-      // See if any of those names appear in the user message
-      const matched = allLayers.filter(l => {
-        const layerNameNorm = (l.dimensions?.layerName || "")
+      const matched = allLayers.filter(layer => {
+        const layerNameNorm = (layer.dimensions?.layerName || "")
           .toUpperCase()
           .replace(/[\s_]+/g, "");
-        return normalizedMsg.includes(layerNameNorm);
+
+        const idNorm = layer.id ? layer.id.toUpperCase() : "";
+
+        // Check if either ID or normalized layerName appears in user message
+        return normalizedMsg.includes(layerNameNorm) || (idNorm && normalizedMsg.includes(idNorm));
       });
 
-      relevant[layerType] = matched.length > 0 ? matched : allLayers;
-    } 
-    else if (intent === "create") {
-      // For create, just return empty for this type
+      // Only include layers that actually matched
+      relevant[layerType] = matched; 
+    } else if (intent === "create") {
       relevant[layerType] = [];
     }
   }
@@ -408,7 +405,6 @@ if (intent === "create") {
 
 //Get relevant JSON for these layers
 const relevantJson = getRelevantLayers(existingJson, selectedLayers, userMessage, intent);
-console.log("🟡 Relevant JSON:", JSON.stringify(relevantJson, null, 2));
 
 // Load templates for those canonical layer types
 const templates = selectedLayers
@@ -519,6 +515,22 @@ if (templates.length > 0) {
     console.log("🟢 User asked:", userMessage);
     console.log("📌 Answer source:", source);
     console.log("📝 Text response:", text);
+
+    // Log relevant layers passed to Mini model
+    console.log("🟡 Relevant JSON sent to Mini model:");
+    Object.entries(relevantJson).forEach(([layerType, layers]) => {
+    console.log(`- ${layerType}: ${layers.length} layer(s)`);
+    layers.forEach(layer => {
+    console.log(`  • LayerName: ${layer.dimensions?.layerName || "N/A"}, ID: ${layer.id || "N/A"}`);});});
+
+    // Log Mini model input
+    console.log("🤖 Mini model input:");
+    console.log(JSON.stringify({ userMessage, relevantJson, templates }, null, 2));
+
+    // Log Mini model output
+    console.log("🟢 Mini model output (parsed):");
+    console.log(JSON.stringify(data, null, 2));
+    
     return NextResponse.json({
       source,
       rawAnswer,
