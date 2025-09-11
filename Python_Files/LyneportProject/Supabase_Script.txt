@@ -1,0 +1,75 @@
+select * from regulation_embd limit 5;
+
+SELECT count(*)
+FROM regulation_embd
+WHERE metadata->>'regulator_code' != 'faa';
+
+
+select regulator_code, content, left(embedding::text, 50) as emb_preview
+from regulation_embd
+limit 5;
+
+
+create extension if not exists vector;
+select * from pg_extension where extname = 'vector';
+
+APIError: {'message': 'new row violates row-level security policy for table "regulation_embd"', 'code': '42501', 'hint': None, 'details': None}
+
+-- Allow inserting by any role (public/anons/service)
+create policy "Allow insert into regulation_embd"
+on regulation_embd
+for insert
+to public
+with check (true);
+
+-- Allow selecting
+create policy "Allow select from regulation_embd"
+on regulation_embd
+for select
+to public
+using (true);
+
+
+
+create or replace function match_documents(
+  query_embedding vector(1536),
+  match_count int default 5,
+  filter jsonb default '{}'
+)
+returns table (
+  id uuid,
+  --regulator_code text,
+  content text,
+  metadata jsonb,
+  embedding vector(1536),
+  similarity float
+)
+language plpgsql
+as $$
+begin
+  return query
+  select
+    r.id,
+    --r.regulator_code,
+    r.content,
+    r.metadata,
+    r.embedding,
+    1 - (r.embedding <=> query_embedding) as similarity
+  from regulation_embd r
+  where (filter = '{}' or r.metadata @> filter)
+  order by r.embedding <=> query_embedding
+  limit match_count;
+end;
+$$;
+
+
+************************
+
+
+DELETE FROM regulation_embd;
+
+DROP FUNCTION IF EXISTS match_documents(vector(1536), integer, jsonb);
+
+
+
+Give me a list of standard requirements for designing a heliport TLOF (Touchdown and Lift-Off Area), including minimum dimensions (e.g., width 10 m, length, surface, lighting, markings, etc.).

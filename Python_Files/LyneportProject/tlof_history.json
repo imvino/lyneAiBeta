@@ -1,0 +1,266 @@
+[
+  {
+    "timestamp": "2025-07-10 15:07:38",
+    "input": "Generate a rectangular TLOF for a tiltrotor aircraft with 30m x 40m dimensions, elevation 5m, rotation 15 degrees, and 0.6 transparency. Location is [139.6917, 35.6895]. Add a 'V' landing marker in blue, scaled to 8, rotated to 90 degrees",
+    "output": {
+      "aircraft": "tiltrotor",
+      "shape_type": "Rectangle",
+      "position": [
+        139.6917,
+        35.6895
+      ],
+      "surface_width": 30,
+      "surface_length": 30,
+      "surface_height": 0.01,
+      "rotation": 15,
+      "transparency": 0.6,
+      "elevation": 5,
+      "landingMarker": "V",
+      "markerScale": 8,
+      "markerRotation": 90,
+      "markerColor": "blue"
+    }
+  },
+  {
+    "timestamp": "2025-07-10 15:08:07",
+    "input": "set rotation to 30",
+    "output": {
+      "rotation": 30
+    }
+  },
+  {
+    "timestamp": "2025-07-10 15:17:50",
+    "input": "Generate a rectangular TLOF for a tiltrotor aircraft with 30m x 40m dimensions, elevation 5m, rotation 15 degrees, and 0.6 transparency. Location is [139.6917, 35.6895]. Add a 'V' landing marker in blue, scaled to 8, rotated to 90 degrees",
+    "output": {
+      "aircraft": "tiltrotor",
+      "diameter": null,
+      "shape_type": "Rectangle",
+      "position": [
+        139.6917,
+        35.6895
+      ],
+      "sides": null,
+      "surface_width": 30,
+      "surface_length": 30,
+      "surface_height": 0.01,
+      "rotation": 15,
+      "transparency": 0.6,
+      "elevation": 5,
+      "markingType": "solid",
+      "landingMarker": "V",
+      "markerScale": 8,
+      "markerRotation": 90,
+      "markerColor": "blue"
+    }
+  },
+  {
+    "timestamp": "2025-07-10 15:18:02",
+    "input": "udpate rotation to 30",
+    "output": {
+      "rotation": 30
+    }
+  },
+  {
+    "timestamp": "2025-07-10 15:21:34",
+    "input": "Generate a rectangular TLOF for a tiltrotor aircraft with 30m x 40m dimensions, elevation 5m, rotation 15 degrees, and 0.6 transparency. Location is [139.6917, 35.6895]. Add a 'V' landing marker in blue, scaled to 8, rotated to 90 degrees",
+    "output": {
+      "aircraft": "tiltrotor",
+      "shape_type": "Rectangle",
+      "position": [
+        139.6917,
+        35.6895
+      ],
+      "surface_width": 30,
+      "surface_length": 30,
+      "surface_height": 0.01,
+      "rotation": 15,
+      "transparency": 0.6,
+      "elevation": 5,
+      "landingMarker": "V",
+      "markerScale": 8,
+      "markerRotation": 90,
+      "markerColor": "blue"
+    }
+  },
+  {
+    "timestamp": "2025-07-10 15:22:09",
+    "input": "Generate a rectangular TLOF for a tiltrotor aircraft with 30m x 40m dimensions, elevation 5m, rotation 15 degrees, and 0.6 transparency. Location is [139.6917, 35.6895]. Add a 'V' landing marker in blue, scaled to 8, rotated to 90 degrees",
+    "output": {
+      "aircraft": "tiltrotor",
+      "shape_type": "Rectangle",
+      "position": [
+        139.6917,
+        35.6895
+      ],
+      "width": 30,
+      "length": 30,
+      "elevation": 5,
+      "rotation": 15,
+      "transparency": 0.6,
+      "landingMarker": "V",
+      "markerScale": 8,
+      "markerRotation": 90,
+      "markerColor": "blue"
+    }
+  },
+  {
+    "timestamp": "2025-07-10 15:22:21",
+    "input": "update rotation to 30",
+    "output": {
+      "aircraft": "tiltrotor",
+      "shape_type": "Rectangle",
+      "position": [
+        139.6917,
+        35.6895
+      ],
+      "width": 30,
+      "length": 30,
+      "elevation": 5,
+      "rotation": 30,
+      "transparency": 0.6,
+      "landingMarker": "V",
+      "markerScale": 8,
+      "markerRotation": 90,
+      "markerColor": "blue"
+    }
+  },
+  {
+    "timestamp": "2025-07-10 16:05:34",
+    "input": "Generate a rectangular TLOF for a tiltrotor aircraft with 30m x 40m dimensions, elevation 5m, rotation 15 degrees, and 0.6 transparency. Location is [139.6917, 35.6895]. Add a 'V' landing marker in blue, scaled to 8, rotated to 90 degrees",
+    "output": {
+      "aircraft": "tiltrotor",
+      "shape_type": "Rectangle",
+      "position": [
+        139.6917,
+        35.6895
+      ],
+      "width": 30,
+      "length": 30,
+      "height": 0.01,
+      "rotation": 15,
+      "transparency": 0.6,
+      "elevation": 5,
+      "landingMarker": "V",
+      "markerScale": 8,
+      "markerThickness": 0.02,
+      "markerRotation": 90,
+      "markerColor": "blue"
+    }
+  },
+  {
+    "timestamp": "2025-07-10 16:05:51",
+    "input": "update rotation to 30",
+    "output": {
+      "aircraft": "tiltrotor",
+      "shape_type": "Rectangle",
+      "position": [
+        139.6917,
+        35.6895
+      ],
+      "width": 30,
+      "length": 30,
+      "height": 0.01,
+      "rotation": 30,
+      "transparency": 0.6,
+      "elevation": 5,
+      "landingMarker": "V",
+      "markerScale": 8,
+      "markerThickness": 0.02,
+      "markerRotation": 90,
+      "markerColor": "blue"
+    }
+  },
+  {
+    "timestamp": "2025-07-10 16:06:03",
+    "input": "set light height to 0.21",
+    "output": {
+      "lightHeight": 0.21
+    }
+  },
+  {
+    "timestamp": "2025-07-10 16:06:32",
+    "input": "update widht to 19",
+    "output": {
+      "lightHeight": 0.21,
+      "width": 30
+    }
+  },
+  {
+    "timestamp": "2025-07-10 16:06:46",
+    "input": "set length to 29",
+    "output": {
+      "length": 30
+    }
+  },
+  {
+    "timestamp": "2025-07-10 19:03:09",
+    "input": "set light height to 0.13",
+    "output": {
+      "lightHeight": 0.13
+    }
+  },
+  {
+    "timestamp": "2025-07-11 13:57:17",
+    "input": "Generate a rectangular TLOF for a tiltrotor aircraft with 30m x 40m dimensions, elevation 5m, rotation 15 degrees, and 0.6 transparency. Location is [139.6917, 35.6895]. Add a 'V' landing marker in blue, scaled to 8, rotated to 90 degrees.",
+    "output": {
+      "aircraft": "tiltrotor",
+      "diameter": null,
+      "shape_type": "Rectangle",
+      "position": [
+        139.6917,
+        35.6895
+      ],
+      "sides": null,
+      "width": 30,
+      "length": 40,
+      "height": 0.01,
+      "rotation": 15,
+      "transparency": 0.6,
+      "elevation": 5,
+      "markingType": "solid",
+      "markingColor": "white",
+      "markingThickness": 0.5,
+      "dashLength": 1,
+      "dashDistance": 1,
+      "landingMarker": "V",
+      "markerScale": 8,
+      "markerThickness": 0.02,
+      "markerRotation": 90,
+      "markerColor": "blue",
+      "letterThickness": 0.5,
+      "tdpcCategory": false,
+      "tdpcType": "circle",
+      "tdpcScale": 5,
+      "tdpcThickness": 0.5,
+      "tdpcExtrusion": 0.02,
+      "tdpcRotation": 0,
+      "tdpcColor": "white",
+      "lightColor": null,
+      "lightScale": 1,
+      "lightDistance": 1,
+      "lightRadius": 0.3,
+      "lightHeight": 0.2,
+      "safetyAreaType": "offset",
+      "dValue": 10,
+      "multiplier": 1.5,
+      "offsetDistance": 3,
+      "curveAngle": 45,
+      "netHeight": 15,
+      "safetyNetTransparency": 0.5
+    }
+  },
+  {
+    "timestamp": "2025-07-11 13:57:49",
+    "input": "SET marker Color TO RED",
+    "output": {
+      "markerColor": "red"
+    }
+  },
+  {
+    "timestamp": "2025-07-11 13:58:24",
+    "input": "SET curve Angle 40",
+    "output": {
+      "curveAngle": 40
+    }
+  }
+]
