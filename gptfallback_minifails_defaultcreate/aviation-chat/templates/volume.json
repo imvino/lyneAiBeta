@@ -1,0 +1,41 @@
+{
+  "name": "VOLUME",
+  "description": "VOLUME output template (wrapped with text + data)",
+  "content": {
+    "text": "<short natural explanation>",
+    "data": {
+      "VOLUME": [ 
+    {
+      "position": [0, 0],
+      "isVisible": true,
+      "dimensions": {
+        "topWidth": "(number, Range: 100-100, Default: 100)",
+        "baseWidth": "(number, Range: 50-50, Default: 50)",
+        "isVisible": "(boolean, Default: true)",
+        "layerName": "(string, Must be unique per session. Default: 'OFV_Unknown')",
+        "topLength": "(number, Range: 100-100, Default: 100)",
+        "baseHeight": "(number, Range: 0-1000, Default: 0)",
+        "baseLength": "(number, Range: 50-50, Default: 50)",
+        "lowerHeight": "(number, Range: 0-100, Default: 30)",
+        "middleWidth": "(number, Range: 70-70, Default: 70)",
+        "topDiameter": "(number, Range: 20-400, Default: 100)",
+        "upperHeight": "(number, Range: 0-100, Default: 50)",
+        "volumeColor": "(string, Hex color code, Default: '#808080')",
+        "baseDiameter": "(number, Range: 20-200, Default: 50)",
+        "middleLength": "(number, Range: 70-70, Default: 70)",
+        "transparency": "(number, Range: 0.0-1.0, Default: 0.5)",
+        "middleDiameter": "(number, Range: 20-300, Default: 70)",
+        "volumeCategory": "(string, Options: 'rectilinear','cylindrical', Default: 'cylindrical')",
+        "volumeRotation": "(number, Range: 0-359, Default: 0)"
+         }
+       }
+     ]
+    }
+  }
+}
+
+
+
+
+
+

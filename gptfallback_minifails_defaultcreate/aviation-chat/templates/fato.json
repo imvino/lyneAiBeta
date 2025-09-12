@@ -10,7 +10,6 @@
           "isVisible": true,
           "dimensions": {
             "sides": "(integer, Range: 3-12, Default: 6)",
-            "testSides": "(integer, Range: 3-20, Default: 10)",
             "diameter": "(number, Range: 10-200, Default: 30)",
             "width": "(number, Range: 0.1-100, Default: 30)",
             "length": "(number, Range: 0.1-100, Default: 30)",
@@ -18,7 +17,7 @@
             "rotation": "(number, Range: 0-360, Default: 0)",
             "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
             "baseHeight": "(number, Range: -10-50, Default: 0)",
-            "layerName": "(string, Must be unique per session. Default: 'FATO_Unknown')",
+            "layerName": "(string, Must be unique per session. Default: 'GEOMETRY_Unknown')",
             "textureScaleU": "(number, Range: 0.1-10, Default: 1)",
             "textureScaleV": "(number, Range: 0.1-10, Default: 1)",
             "lightColor": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'white')",

@@ -1,0 +1,37 @@
+{
+  "name": "FLIGHTPATH_VFR",
+  "description": "FLIGHTPATH_VFR output template (wrapped with text + data)",
+  "content": {
+    "text": "<short natural explanation>",
+    "data": {
+      "FLIGHTPATH_VFR": [
+        {
+          "position": [0, 0],
+          "isVisible": true,
+          "dimensions": {
+            "depth": "(number, Range: 0-5000, Default: 1219)",
+            "height": "(number, Range: 0-1000, Default: 152)",
+            "radius": "(number, Range: 0-5000, Default: 500)",
+            "rotation": "(number, Range: 0-359, Default: 0)",
+            "isVisible": "(boolean, Default: true)",
+            "layerName": "(string, Must be unique per session, Default: 'OLS_Unknown')",
+            "baseHeight": "(number, Range: 0-5000, Default: 0)",
+            "edgeLength": "(number, Range: 0-1000, Default: 15)",
+            "parallelEdge": "(number, Range: 0-5000, Default: 100)",
+            "transparency": "(number, Range: 0.0-1.0, Default: 0.5)",
+            "triangleColor": "(string, Hex color code, Default: '#FF0000')",
+            "curveDirection": "(string, Options: 'left','right','none', Default: 'left')",
+            "showDimensions": "(boolean, Default: false)",
+            "triangleHeight": "(number, Range: 0-1000, Default: 50)",
+            "flightPathColor": "(string, Hex color code, Default: '#0259FF')",
+            "middleEdgeLength": "(number, Range: 0-1000, Default: 50)",
+            "triangleRotation": "(number, Range: 0-359, Default: 45)",
+            "flightPathCategory": "(string, Options: 'Straight','Curved',Default: 'Straight')",
+            "middleEdgeDistance": "(number, Range: 0-5000, Default: 500)",
+            "edgeCurveOrientation": "(number, Range: 0-359, Default: 0)"
+          }
+        }
+      ]
+    }
+  }
+}
