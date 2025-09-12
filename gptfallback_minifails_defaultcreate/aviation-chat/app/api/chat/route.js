@@ -54,10 +54,36 @@ function mapLayersFromUserMessage(msg) {
   const text = msg.toLowerCase().replace(/[\s_]+/g, " "); // normalize spaces & underscores
   const layers = [];
 
-  if (/\b(tlof|landing surface)\b/.test(text)) layers.push("TLOF");
-  if (/\b(fato|geometry)\b/.test(text)) layers.push("FATO");
-  if (/\btaxiway(s)?\b/.test(text)) layers.push("TAXIWAY");
-  if (/\bshape(s)?\b/.test(text)) layers.push("SHAPES");
+  // --- Synonyms dictionary for layer mapping ---
+const synonyms = {
+  TLOF: [
+    "tlof", "landing surface", "helipad", "pad", "touchdown", "touchdown pad",
+    "landing area", "helideck", "deck", "platform"
+  ],
+  FATO: [
+    "fato", "geometry", "final approach", "approach area", "approach path",
+    "landing zone", "approach surface", "safety area", "final zone"
+  ],
+  TAXIWAY: [
+    "taxiway", "taxi route", "pathway", "apron taxiway", "ground route",
+    "connector", "runway link", "taxi path"
+  ],
+  SHAPES: [
+    "shape", "shapes", "polygon", "polyline", "zone", "marking", "drawing",
+    "outline", "area marking", "geometry shape"
+  ]
+};
+
+for (const [layerType, keywords] of Object.entries(synonyms)) {
+    for (const kw of keywords) {
+      // match whole word or phrase
+      const regex = new RegExp(`\\b${kw}\\b`, "i");
+      if (regex.test(text)) {
+        layers.push(layerType);
+        break; // stop checking more synonyms for this layer
+      }
+    }
+  }
 
   return [...new Set(layers)]; // remove duplicates
 }
@@ -291,13 +317,18 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
         const idx = updatedJson[key].findIndex(
           l => normalizeName(l.dimensions?.layerName) === normalizeName(updateObj.dimensions?.layerName)
         );
-        if (idx !== -1) {
-          updatedJson[key][idx] = {
-            ...updatedJson[key][idx],
-            dimensions: { ...updatedJson[key][idx].dimensions, ...updateObj.dimensions }
-          };
-          return;
-        }
+      if (idx !== -1) {
+  updatedJson[key][idx] = {
+    ...updatedJson[key][idx],
+    position: updateObj.position ?? updatedJson[key][idx].position,
+    isVisible: updateObj.isVisible ?? updatedJson[key][idx].isVisible,
+    dimensions: {
+      ...updatedJson[key][idx].dimensions,
+      ...updateObj.dimensions
+    }
+  };
+  return;
+}
       }
 
       // Create new layer if intent is create or no existing layer found
@@ -419,7 +450,6 @@ const templates = selectedLayers
     }
   })
   .filter(Boolean); // remove nulls
-  
 
     // Step 3: Filter with GPT-4.1-mini (we still call your azureGpt4 as filter in current code)
     let text = "";
@@ -506,10 +536,9 @@ if (templates.length > 0) {
       data = createDefaultLayer(userMessage);
       text = "Default layer created ";
     }
-
+    
     // --- Step 4: Merge AI updates into existing JSON safely ---
     const updatedJson = mergeUpdates(existingJson, data, userMessage, intent);
-  
 
     // Final output
     console.log("🟢 User asked:", userMessage);
@@ -530,7 +559,7 @@ if (templates.length > 0) {
     // Log Mini model output
     console.log("🟢 Mini model output (parsed):");
     console.log(JSON.stringify(data, null, 2));
-    
+
     return NextResponse.json({
       source,
       rawAnswer,
