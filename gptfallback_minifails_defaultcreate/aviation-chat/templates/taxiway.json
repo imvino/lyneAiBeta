@@ -10,7 +10,6 @@
         "isVisible": true,
         "dimensions": {
           "turnType": "(string, Options: 'straight' 'left', 'right', 'both'. Default: 'both')",
-          "isVisible": "(boolean, Default: true)",
           "layerName": "(string, Must be unique per session, Default: 'TAXIWAY_Unknown')",
           "baseHeight": "(number, Range: 0-1000, Default: 0)",
           "markerWidth": "(number, Range: 0.1-2, Default: 0.3)",

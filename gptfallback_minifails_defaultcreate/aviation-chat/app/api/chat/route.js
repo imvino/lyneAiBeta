@@ -57,20 +57,28 @@ function mapLayersFromUserMessage(msg) {
   // --- Synonyms dictionary for layer mapping ---
 const synonyms = {
   TLOF: [
-    "tlof", "landing surface", "helipad", "pad", "touchdown", "touchdown pad",
-    "landing area", "helideck", "deck", "platform"
+    "tlof", "landing surface", "helipad", "landing area"
   ],
   FATO: [
-    "fato", "geometry", "final approach", "approach area", "approach path",
-    "landing zone", "approach surface", "safety area", "final zone"
+    "fato", "geometry", "final approach", "approach area", "approach surface"
   ],
   TAXIWAY: [
-    "taxiway", "taxi route", "pathway", "apron taxiway", "ground route",
-    "connector", "runway link", "taxi path"
+    "taxiway", "taxi route", "taxi path"
   ],
-  SHAPES: [
-    "shape", "shapes", "polygon", "polyline", "zone", "marking", "drawing",
-    "outline", "area marking", "geometry shape"
+  SHAPE: [
+    "shape", "shapes"
+  ],
+  MODEL: [
+    "model library", "model"
+  ],
+  VOLUME: [
+    "ofv", "volume", "cylinder volume", "rectilinear volume"
+  ],
+  FLIGHTPATH: [
+    "flightpath", "flight path"
+  ],
+  FLIGHTPATH_VFR: [
+    "ols", "flightpath vfr"
   ]
 };
 
@@ -286,26 +294,43 @@ function createDefaultLayer(userMessage, forcedLayerType) {
 }
 
 // --- Merge updates with existing JSON ---
-function mergeUpdates(existingJson, data, userMessage, intent) {
+function mergeUpdates(existingJson, data, userMesage, intent) {
   const updatedJson = { ...existingJson };
-  const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPES"];
+  const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPE", "MODEL", "VOLUME", "FLIGHTPATH", "FLIGHTPATH_VFR"];
+
+// Canonical → default display name
+  const displayNames = {
+    TLOF: "LANDING SURFACE",
+    FATO: "GEOMETRY",
+    TAXIWAY: "TAXIWAY",
+    SHAPES: "SHAPES",
+    MODEL: "MODEL LIBRARY",
+    VOLUME: "OFV",
+    FLIGHTPATH: "FLIGHT PATH",
+    FLIGHTPATH_VFR: "OLS"
+  };
 
   function normalizeName(name) {
     return (name || "").toLowerCase().replace(/[\s_]+/g, "");
   }
 
   function getNextLayerName(layerType) {
-    const existing = updatedJson[layerType] || [];
-    let maxId = 0;
-    existing.forEach(item => {
-      const match = (item.dimensions?.layerName || "").match(new RegExp(`^${layerType}_(\\d+)$`));
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxId) maxId = num;
-      }
-    });
-    return `${layerType}_${(maxId + 1).toString().padStart(3, "0")}`;
-  }
+  const prefix = displayNames[layerType] || layerType;
+  const existing = updatedJson[layerType] || [];
+  let maxId = 0;
+
+  existing.forEach(item => {
+    const currentName = (item.dimensions?.layerName || "").replace(/\s+/g, "_");
+    const normalizedPrefix = prefix.replace(/\s+/g, "_");
+    const match = currentName.match(new RegExp(`^${normalizedPrefix}_(\\d+)$`, "i"));
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxId) maxId = num;
+    }
+  });
+
+  return `${prefix}_${(maxId + 1).toString().padStart(3, "0")}`;
+}
 
   for (const key of possibleLayers) {
     if (!data[key]) continue;
@@ -328,8 +353,8 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
     }
   };
   return;
+ }
 }
-      }
 
       // Create new layer if intent is create or no existing layer found
       const newName = getNextLayerName(key);
@@ -469,21 +494,49 @@ const templates = selectedLayers
     "TLOF": [...],
     "FATO": [...],
     "TAXIWAY": [...],
-    "SHAPES": [...]
+    "SHAPES": [...],
+    "MODEL": [...],
+    "VOLUME": [...],
+    "FLIGHTPATH": [...],
+    "FLIGHTPATH_VFR": [...]
   }
 }
 
 - "data" must always contain the selected templates filled with parameters from the user request.
 - Never return {} for data.
-- Only return data for the layers explicitly requested in the user’s message: ${selectedLayers.join(", ")}.
+- Only return data for the layers explicitly requested in the user's message: ${selectedLayers.join(", ")}.
 - Do not create or duplicate other layer types.
 
 Layer selection rules:
-- If user mentions "landing surface" or "tlof" → use TLOF
-- If user mentions "geometry" or "fato" → use FATO
-- If user mentions "taxiway" → use TAXIWAY
-- If user mentions "shape" → use SHAPES
-- Never create layers not explicitly requested by the user
+- If the user mentions ANY of these words → map to TLOF:
+  ["tlof", "landing surface", "helipad", "landing area"]
+
+- If the user mentions ANY of these words → map to FATO:
+  ["fato", "geometry", "final approach", "approach area", "approach surface"]
+
+- If the user mentions ANY of these words → map to TAXIWAY:
+  ["taxiway", "taxi route", "taxi path"]
+
+- If the user mentions ANY of these words → map to SHAPE:
+  ["shape", "shapes"]
+
+- If the user mentions ANY of these words → map to MODEL:
+  ["model", "model library"]
+
+- If the user mentions ANY of these words → map to VOLUME:
+  ["ofv", "volume", "cylinder volume", "rectilinear volume"]
+
+- If the user mentions ANY of these words → map to FLIGHTPATH:
+  ["flightpath", "flight path"]
+
+- If the user mentions ANY of these words → map to FLIGHTPATH_VFR:
+  ["ols", "flightpath vfr"]
+
+Additional constraints:
+- Never create layers not explicitly requested by the user.
+- If multiple synonyms appear in the same request, include each corresponding layer separately.
+- Do not merge or combine different requested layer names into a single "layerName".
+- Use the default values from the provided template unless the user explicitly overrides a parameter.
 
 RULES:
 - Aircraft dimensions must remain within published ranges.

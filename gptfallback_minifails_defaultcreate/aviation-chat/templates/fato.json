@@ -18,17 +18,14 @@
             "transparency": "(number, Range: 0.0-1.0, Default: 1.0)",
             "baseHeight": "(number, Range: 0-1000, Default: 0)",
             "layerName": "(string, Must be unique per session. Default: 'GEOMETRY_Unknown')",
-            "isVisible": "(boolean, Default: true)",
             "textureScaleU": "(number, Range: 0.1-50, Default: 1)",
             "textureScaleV": "(number, Range: 0.1-50, Default: 1)",
             "vertipadColor": "(string, Hex color code, Default: '#808080')",
-            "scaleCategory": "(boolean)",
-            "lightCategory": "(boolean)",
             "lightColor": "(string, Options: 'white', 'yellow', 'blue', 'red', 'green', 'black', 'purple', 'orange', 'gray', 'brown'. Default: 'white')",
             "lightScale": "(number, Range: -20-100, Default: 1)",
             "lightDistance": "(number, Range: 0.5-50, Default: 1)",
             "lightRadius": "(number, Range: 0.1-1.0, Default: 0.3)",
-            "lightHeight": "(number, Range: 0.1-0.25, Default: 0.3)"
+            "lightHeight": "(number, Range: 0.1-0.25, Default: 0.2)"
           }
         }
       ]

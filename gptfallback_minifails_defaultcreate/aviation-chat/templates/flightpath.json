@@ -10,15 +10,13 @@
           "isVisible": true,
           "dimensions": {
             "points": "(array of [lat, lon] coordinates, Default: [])",
-            "isVisible": "(boolean, Default: true)",
-            "layerName": "(string, Must be unique per session. Default: 'FLIGHTPATH_Unknown')",
+            "layerName": "(string, Must be unique per session. Default: 'FLIGHT PATH_Unknown')",
             "innerColor": "(string, Hex color code, Default: '#FFFF00')",
             "middleColor": "(string, Hex color code, Default: '#808080')",
             "outerColor": "(string, Hex color code, Default: '#FF0000')",
             "innerOpacity": "(number, Range: 0.0-1.0, Default: 0.7)",
             "middleOpacity": "(number, Range: 0.0-1.0, Default: 0.7)",
-            "outerOpacity": "(number, Range: 0.0-1.0, Default: 0.7)",
-            "wireframeMode": "(boolean, Default: true)"
+            "outerOpacity": "(number, Range: 0.0-1.0, Default: 0.7)"
           }
         }
       ]

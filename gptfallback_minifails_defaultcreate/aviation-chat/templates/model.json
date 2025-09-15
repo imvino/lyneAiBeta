@@ -14,7 +14,6 @@
         "hanger": "(integer flag, Range: 0-1, Default: 0) // 0 by default; set to 1 when user requests hanger",
         "storage": "(integer flag, Range: 0-1, Default: 0) // 0 by default; set to 1 when user requests storage",
         "aircraft": "(integer flag, Range: 0-1, Default: 0) // 0 by default; set to 1 when user requests aircraft",
-        "isVisible": "(boolean, Default: true)",
         "layerName": "(string, Must be unique per session. Default: 'MODEL LIBRARY_Unknown')",
         "baseHeight": "(number, Range: 0-1000, Default: 0)",
         "modelScale": "(number, Range: 0.01-50, Default: 1)",

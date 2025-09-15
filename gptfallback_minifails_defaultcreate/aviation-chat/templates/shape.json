@@ -1,10 +1,10 @@
 {
-  "name": "SHAPES",
-  "description": "SHAPES output template (wrapped with text + data)",
+  "name": "SHAPE",
+  "description": "SHAPE output template (wrapped with text + data)",
   "content": {
     "text": "<short natural explanation>",
     "data": {
-      "SHAPES": [
+      "SHAPE": [
        {
           "position": [0, 0],
           "isVisible": true,
@@ -14,19 +14,15 @@
             "baseHeight": "(number, Range: 0-100, Default: 0)",
             "color": "(string, Options: 'white', 'yellow', 'red', 'blue'. Default: 'yellow')",
             "layerName": "(string, Must be unique per session. Default: 'SHAPES_Unknown')",
-            "isVisible": "(boolean, Default: true)",
-            "lineCategory": "(boolean, Default: false)",
             "lineWidth": "(number, Range: 0.5-5000, Default: 0.5)",
             "lineLength": "(number, Range: 0.5-5000, Default: 10)",
             "lineStyle": "(string, Options: 'solid', 'dashed', 'circle', Default: 'solid')",
             "dashLength": "(number, Range: 0.5-10, Default: 2)",
             "dashGap": "(number, Range: 0.5-100, Default: 2)",
             "dashedCircleRadius": "(number, Range: 0.5-100, Default: 0.5)",
-            "circleCategory": "(boolean, Default: true)",
             "circleGap": "(number, Range: 0-50, Default: 2)",
             "circleRadius": "(number, Range: 0.05-50, Default: 5)",
             "hollowScale": "(number, Range: 0-99, Default: 0)",
-            "polygonCategory": "(boolean, Default: false)",
             "polygonRadius": "(number, Range: 0.05-50, Default: 5)",
             "polygonSides": "(integer, Range: 3-12, Default: 3)"         
           }
