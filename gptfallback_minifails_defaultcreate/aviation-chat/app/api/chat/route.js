@@ -54,6 +54,11 @@ function mapLayersFromUserMessage(msg) {
   const text = msg.toLowerCase().replace(/[\s_]+/g, " "); // normalize spaces & underscores
   const layers = [];
 
+  // --- Special rule for landing pad ---  }
+  if (/landing pad|helipad/i.test(text)) {
+    layers.push("TLOF", "FATO");
+  }
+
   // --- Synonyms dictionary for layer mapping ---
 const synonyms = {
   TLOF: [
@@ -294,7 +299,7 @@ function createDefaultLayer(userMessage, forcedLayerType) {
 }
 
 // --- Merge updates with existing JSON ---
-function mergeUpdates(existingJson, data, userMesage, intent) {
+function mergeUpdates(existingJson, data, userMessage, intent) {
   const updatedJson = { ...existingJson };
   const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPE", "MODEL", "VOLUME", "FLIGHTPATH", "FLIGHTPATH_VFR"];
 
@@ -303,12 +308,14 @@ function mergeUpdates(existingJson, data, userMesage, intent) {
     TLOF: "LANDING SURFACE",
     FATO: "GEOMETRY",
     TAXIWAY: "TAXIWAY",
-    SHAPES: "SHAPES",
+    SHAPE: "SHAPES",
     MODEL: "MODEL LIBRARY",
     VOLUME: "OFV",
     FLIGHTPATH: "FLIGHT PATH",
     FLIGHTPATH_VFR: "OLS"
   };
+
+  const isLandingPad = /landing pad|helipad/i.test(userMessage);
 
   function normalizeName(name) {
     return (name || "").toLowerCase().replace(/[\s_]+/g, "");
@@ -402,6 +409,7 @@ function getRelevantLayers(existingJson, selectedLayers, userMessage, intent) {
 
 // --- API Route Handler ---
 export async function POST(req) {
+  const startTime = Date.now(); // mark start
   try {
     const body = await req.json();
     const messages = body.messages || [];
@@ -532,6 +540,10 @@ Layer selection rules:
 - If the user mentions ANY of these words → map to FLIGHTPATH_VFR:
   ["ols", "flightpath vfr"]
 
+- If the user mentions “landing pad” or “helipad” , then you must always create both TLOF and FATO layers together.
+  TLOF → returned as "layerName": "LANDING SURFACE"
+  FATO → returned as "layerName": "GEOMETRY"
+
 Additional constraints:
 - Never create layers not explicitly requested by the user.
 - If multiple synonyms appear in the same request, include each corresponding layer separately.
@@ -592,6 +604,10 @@ if (templates.length > 0) {
     
     // --- Step 4: Merge AI updates into existing JSON safely ---
     const updatedJson = mergeUpdates(existingJson, data, userMessage, intent);
+    
+    const endTime = Date.now(); // mark end
+    const responseTimeMs = endTime - startTime; 
+    console.log(`⏱ Response time: ${responseTimeMs} ms`); 
 
     // Final output
     console.log("🟢 User asked:", userMessage);
@@ -617,6 +633,7 @@ if (templates.length > 0) {
       source,
       rawAnswer,
       text,
+      responseTimeMs,
       data,
       updatedJson,
       content: text,
