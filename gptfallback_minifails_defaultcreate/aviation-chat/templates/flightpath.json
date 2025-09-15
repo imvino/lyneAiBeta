@@ -9,7 +9,7 @@
           "position": [0, 0],
           "isVisible": true,
           "dimensions": {
-            "points": "(array of [lat, lon] coordinates, Default: [])",
+            "points": [0, 0],
             "layerName": "(string, Must be unique per session. Default: 'FLIGHT PATH_Unknown')",
             "innerColor": "(string, Hex color code, Default: '#FFFF00')",
             "middleColor": "(string, Hex color code, Default: '#808080')",

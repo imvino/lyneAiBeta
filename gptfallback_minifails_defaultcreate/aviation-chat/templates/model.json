@@ -17,7 +17,7 @@
         "layerName": "(string, Must be unique per session. Default: 'MODEL LIBRARY_Unknown')",
         "baseHeight": "(number, Range: 0-1000, Default: 0)",
         "modelScale": "(number, Range: 0.01-50, Default: 1)",
-        "modelCustom": "(string|null, Default: null) // custom model identifier / URL",
+        "modelCustom": "(string|null, Default: null)",
         "modelCategory": "(string, Options: 'Truck','Tree','Charging','Aircraft','Storage', 'Electric', 'Container', 'Crane', 'Hanger', 'Connector'. Default: 'Truck')",
         "modelRotation": "(number, Range: 0-359, Default: 0)"
       }

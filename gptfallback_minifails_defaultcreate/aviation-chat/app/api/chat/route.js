@@ -49,6 +49,20 @@ function extractJson(text) {
   return match ? match[0] : "{}";
 }
 
+// --- Normalize JSON: convert array-of-objects into object-of-arrays ---
+function normalizeJson(input) {
+  if (Array.isArray(input)) {
+    return input.reduce((acc, obj) => {
+      for (const key in obj) {
+        if (!acc[key]) acc[key] = [];
+        acc[key] = acc[key].concat(obj[key]); // merge arrays
+      }
+      return acc;
+    }, {});
+  }
+  return input || {}; // already object form or null
+}
+
 // --- Map user message to layer types (plural) ---
 function mapLayersFromUserMessage(msg) {
   const text = msg.toLowerCase().replace(/[\s_]+/g, " "); // normalize spaces & underscores
@@ -62,7 +76,7 @@ function mapLayersFromUserMessage(msg) {
   // --- Synonyms dictionary for layer mapping ---
 const synonyms = {
   TLOF: [
-    "tlof", "landing surface", "helipad", "landing area"
+    "tlof", "landing surface", "landing area"
   ],
   FATO: [
     "fato", "geometry", "final approach", "approach area", "approach surface"
@@ -74,13 +88,13 @@ const synonyms = {
     "shape", "shapes"
   ],
   MODEL: [
-    "model library", "model"
+    "model library", "model", "crane", "truck", "hanger", "storage", "aircraft", "container", "electric", "charging", "tree", "connector" 
   ],
   VOLUME: [
     "ofv", "volume", "cylinder volume", "rectilinear volume"
   ],
   FLIGHTPATH: [
-    "flightpath", "flight path"
+    "flightpath", "flight path", "runway"
   ],
   FLIGHTPATH_VFR: [
     "ols", "flightpath vfr"
@@ -104,8 +118,8 @@ for (const [layerType, keywords] of Object.entries(synonyms)) {
 // --- Detect user intent ---
 function detectIntent(msg) {
   msg = msg.toLowerCase();
-  if (msg.includes("create") || msg.includes("add") || msg.includes("new") || msg.includes("another") || msg.includes("make")) return "create";
-  if (msg.includes("update") || msg.includes("change") || msg.includes("modify") || msg.includes("set") || msg.includes("give")) return "update";
+  if (msg.includes("create") || msg.includes("add") || msg.includes("new") || msg.includes("another") || msg.includes("generate") || msg.includes("insert") || msg.includes("make")) return "create";
+  if (msg.includes("update") || msg.includes("change") || msg.includes("modify") || msg.includes("set") || msg.includes("rotate") || msg.includes("move") || msg.includes("resize") || msg.includes("shift") || msg.includes("adjust") || msg.includes("give")) return "update";
   return "unknown";
 }
 
@@ -298,7 +312,7 @@ function createDefaultLayer(userMessage, forcedLayerType) {
   return { [layerType]: [layer] };
 }
 
-// --- Merge updates with existing JSON ---
+// --- Merge updates with existing JSON (support update by layerName or ID) ---
 function mergeUpdates(existingJson, data, userMessage, intent) {
   const updatedJson = { ...existingJson };
   const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPE", "MODEL", "VOLUME", "FLIGHTPATH", "FLIGHTPATH_VFR"];
@@ -315,29 +329,35 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
     FLIGHTPATH_VFR: "OLS"
   };
 
-  const isLandingPad = /landing pad|helipad/i.test(userMessage);
-
   function normalizeName(name) {
     return (name || "").toLowerCase().replace(/[\s_]+/g, "");
   }
 
   function getNextLayerName(layerType) {
-  const prefix = displayNames[layerType] || layerType;
-  const existing = updatedJson[layerType] || [];
-  let maxId = 0;
+    const existing = updatedJson[layerType] || [];
+    let maxId = 0;
 
-  existing.forEach(item => {
-    const currentName = (item.dimensions?.layerName || "").replace(/\s+/g, "_");
-    const normalizedPrefix = prefix.replace(/\s+/g, "_");
-    const match = currentName.match(new RegExp(`^${normalizedPrefix}_(\\d+)$`, "i"));
-    if (match) {
-      const num = parseInt(match[1], 10);
-      if (num > maxId) maxId = num;
+    // Try to extract the base name from the first template/default
+    let baseName = "Layer";
+    if (existing.length > 0) {
+      const firstName = existing[0].dimensions?.layerName || "";
+      baseName = firstName.replace(/\s*\(\d+\)$/, ""); // strip existing (N)
+    } else {
+      baseName = displayNames[layerType] || layerType;
     }
-  });
 
-  return `${prefix}_${(maxId + 1).toString().padStart(3, "0")}`;
-}
+    // Find max existing ID for this base name
+    existing.forEach(item => {
+      const currentName = item.dimensions?.layerName || "";
+      const match = currentName.match(new RegExp(`^${baseName}\\s*\\((\\d+)\\)$`, "i"));
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxId) maxId = num;
+      }
+    });
+
+    return `${baseName} (${maxId + 1})`;
+  }
 
   for (const key of possibleLayers) {
     if (!data[key]) continue;
@@ -345,30 +365,34 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
 
     data[key].forEach(updateObj => {
       if (intent === "update") {
-        // Update existing layer by name
-        const idx = updatedJson[key].findIndex(
-          l => normalizeName(l.dimensions?.layerName) === normalizeName(updateObj.dimensions?.layerName)
+        // Update existing layer by name or by ID
+        const idx = updatedJson[key].findIndex(l =>
+          (l.id && l.id === updateObj.id) ||
+          normalizeName(l.dimensions?.layerName) === normalizeName(updateObj.dimensions?.layerName)
         );
-      if (idx !== -1) {
-  updatedJson[key][idx] = {
-    ...updatedJson[key][idx],
-    position: updateObj.position ?? updatedJson[key][idx].position,
-    isVisible: updateObj.isVisible ?? updatedJson[key][idx].isVisible,
-    dimensions: {
-      ...updatedJson[key][idx].dimensions,
-      ...updateObj.dimensions
-    }
-  };
-  return;
- }
-}
+
+        if (idx !== -1) {
+          updatedJson[key][idx] = {
+            ...updatedJson[key][idx],
+            position: updateObj.position ?? updatedJson[key][idx].position,
+            isVisible: updateObj.isVisible ?? updatedJson[key][idx].isVisible,
+            dimensions: {
+              ...updatedJson[key][idx].dimensions,
+              ...updateObj.dimensions
+            },
+            id: updateObj.id ?? updatedJson[key][idx].id
+          };
+          return; // skip creation
+        }
+      }
 
       // Create new layer if intent is create or no existing layer found
       const newName = getNextLayerName(key);
       updatedJson[key].push({
         position: updateObj.position || [0, 0],
         isVisible: updateObj.isVisible ?? true,
-        dimensions: { ...updateObj.dimensions, layerName: newName }
+        dimensions: { ...updateObj.dimensions, layerName: newName },
+        id: updateObj.id || undefined
       });
     });
   }
@@ -379,26 +403,51 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
 // --- Select relevant JSON based on user intent & message ---
 function getRelevantLayers(existingJson, selectedLayers, userMessage, intent) {
   const relevant = {};
-  const normalizedMsg = userMessage.toUpperCase().replace(/\s+/g, ""); 
-  // e.g. "update zone a" → "UPDATEZONEA"
+  const msgUpper = userMessage.toUpperCase();
+
+  // Canonical → display names
+  const displayNames = {
+    TLOF: "LANDING SURFACE",
+    FATO: "GEOMETRY",
+    TAXIWAY: "TAXIWAY",
+    SHAPE: "SHAPES",
+    MODEL: "MODEL LIBRARY",
+    VOLUME: "OFV",
+    FLIGHTPATH: "FLIGHT PATH",
+    FLIGHTPATH_VFR: "OLS"
+  };
 
   for (const layerType of selectedLayers) {
     const allLayers = existingJson[layerType] || [];
 
     if (intent === "update") {
-      const matched = allLayers.filter(layer => {
-        const layerNameNorm = (layer.dimensions?.layerName || "")
-          .toUpperCase()
-          .replace(/[\s_]+/g, "");
+      const baseName = displayNames[layerType] || layerType;
 
+      // Regex to match "BASE 1", "BASE (1)", "BASE1" in the message
+      const regex = new RegExp(`${baseName}\\s*\\(?\\s*(\\d+)\\s*\\)?`, "gi");
+
+      // Collect all layer numbers mentioned in message for this type
+      const layerNumbersInMsg = [];
+      let match;
+      while ((match = regex.exec(msgUpper)) !== null) {
+        layerNumbersInMsg.push(match[1]); // e.g., "1", "2"
+      }
+
+      // Filter existing layers that match these numbers OR have matching ID
+      const matched = allLayers.filter(layer => {
+        const layerName = layer.dimensions?.layerName || "";
+        const normName = layerName.toUpperCase().replace(/[\s_]+/g, "").replace(/\(|\)/g, "");
         const idNorm = layer.id ? layer.id.toUpperCase() : "";
 
-        // Check if either ID or normalized layerName appears in user message
-        return normalizedMsg.includes(layerNameNorm) || (idNorm && normalizedMsg.includes(idNorm));
+        // Match if either numbered name matches OR layer ID appears in message
+        const nameMatch = layerNumbersInMsg.some(num => normName === (baseName + num).replace(/[\s_]+/g, ""));
+        const idMatch = idNorm && msgUpper.includes(idNorm);
+
+        return nameMatch || idMatch;
       });
 
       // Only include layers that actually matched
-      relevant[layerType] = matched; 
+      relevant[layerType] = matched;
     } else if (intent === "create") {
       relevant[layerType] = [];
     }
@@ -414,7 +463,7 @@ export async function POST(req) {
     const body = await req.json();
     const messages = body.messages || [];
     const userMessage = messages[messages.length - 1]?.content || "";
-    const existingJson = body.existingJson || {};
+    const existingJson = normalizeJson(body.existingJson || {});
 
     if (!userMessage) {
       return NextResponse.json({ content: "No user message." }, { status: 400 });
@@ -463,8 +512,11 @@ let selectedLayers = [];
 if (intent === "create") {
   selectedLayers = mapLayersFromUserMessage(userMessage); // keyword-based
 } else if (intent === "update") {
-  // For update, use top-level keys in existingJson
-  selectedLayers = Object.keys(existingJson); // <-- use existingJson, NOT relevantJson
+  // For updates, only consider layer types with at least one matching layer
+  selectedLayers = Object.keys(existingJson).filter(layerType => {
+    const matchedLayers = getRelevantLayers(existingJson, [layerType], userMessage, intent)[layerType];
+    return Array.isArray(matchedLayers) && matchedLayers.length > 0;
+  });
 }
 
 //Get relevant JSON for these layers
@@ -499,14 +551,14 @@ const templates = selectedLayers
 {
   "text": "<short explanation of what was done>",
   "data": {
-    "TLOF": [...],
-    "FATO": [...],
-    "TAXIWAY": [...],
-    "SHAPES": [...],
-    "MODEL": [...],
-    "VOLUME": [...],
-    "FLIGHTPATH": [...],
-    "FLIGHTPATH_VFR": [...]
+    "FATO": [],
+    "TLOF": [],
+    "TAXIWAY": [],
+    "SHAPE": [],
+    "MODEL": [],
+    "VOLUME": [],
+    "FLIGHTPATH": [],
+    "FLIGHTPATH_VFR": []
   }
 }
 
@@ -517,7 +569,7 @@ const templates = selectedLayers
 
 Layer selection rules:
 - If the user mentions ANY of these words → map to TLOF:
-  ["tlof", "landing surface", "helipad", "landing area"]
+  ["tlof", "landing surface", "landing area"]
 
 - If the user mentions ANY of these words → map to FATO:
   ["fato", "geometry", "final approach", "approach area", "approach surface"]
@@ -529,13 +581,13 @@ Layer selection rules:
   ["shape", "shapes"]
 
 - If the user mentions ANY of these words → map to MODEL:
-  ["model", "model library"]
+  ["model", "model library", "crane", "truck", "hanger", "storage", "aircraft", "container", "electric", "charging", "tree", "connector" ]
 
 - If the user mentions ANY of these words → map to VOLUME:
   ["ofv", "volume", "cylinder volume", "rectilinear volume"]
 
 - If the user mentions ANY of these words → map to FLIGHTPATH:
-  ["flightpath", "flight path"]
+  ["flightpath", "flight path", "runway"]
 
 - If the user mentions ANY of these words → map to FLIGHTPATH_VFR:
   ["ols", "flightpath vfr"]
