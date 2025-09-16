@@ -54,8 +54,19 @@ function normalizeJson(input) {
   if (Array.isArray(input)) {
     return input.reduce((acc, obj) => {
       for (const key in obj) {
-        if (!acc[key]) acc[key] = [];
-        acc[key] = acc[key].concat(obj[key]); // merge arrays
+        // If the value is an array → merge into array
+        if (Array.isArray(obj[key])) {
+          if (!acc[key]) acc[key] = [];
+          acc[key] = acc[key].concat(obj[key]);
+        }
+        // If the value is an object → overwrite (not concat)
+        else if (typeof obj[key] === "object" && obj[key] !== null) {
+          acc[key] = { ...(acc[key] || {}), ...obj[key] };
+        }
+        // Otherwise just assign (primitive values like strings/numbers)
+        else {
+          acc[key] = obj[key];
+        }
       }
       return acc;
     }, {});
@@ -75,30 +86,14 @@ function mapLayersFromUserMessage(msg) {
 
   // --- Synonyms dictionary for layer mapping ---
 const synonyms = {
-  TLOF: [
-    "tlof", "landing surface", "landing area"
-  ],
-  FATO: [
-    "fato", "geometry", "final approach", "approach area", "approach surface"
-  ],
-  TAXIWAY: [
-    "taxiway", "taxi route", "taxi path"
-  ],
-  SHAPE: [
-    "shape", "shapes"
-  ],
-  MODEL: [
-    "model library", "model", "crane", "truck", "hanger", "storage", "aircraft", "container", "electric", "charging", "tree", "connector" 
-  ],
-  VOLUME: [
-    "ofv", "volume", "cylinder volume", "rectilinear volume"
-  ],
-  FLIGHTPATH: [
-    "flightpath", "flight path", "runway"
-  ],
-  FLIGHTPATH_VFR: [
-    "ols", "flightpath vfr"
-  ]
+  TLOF: ["tlof", "landing surface", "landing area"],
+  FATO: ["fato", "geometry", "final approach", "approach area", "approach surface"],
+  TAXIWAY: ["taxiway", "taxi route", "taxi path"],
+  SHAPE: ["shape", "shapes"],
+  MODEL: ["model library", "model", "crane", "truck", "hanger", "storage", "aircraft", "container", "electric", "charging", "tree", "connector"],
+  VOLUME: ["ofv", "volume", "cylinder volume", "rectilinear volume"],
+  FLIGHTPATH: ["flightpath", "flight path", "runway"],
+  FLIGHTPATH_VFR: ["ols", "flightpath vfr"]
 };
 
 for (const [layerType, keywords] of Object.entries(synonyms)) {
@@ -418,7 +413,8 @@ function getRelevantLayers(existingJson, selectedLayers, userMessage, intent) {
   };
 
   for (const layerType of selectedLayers) {
-    const allLayers = existingJson[layerType] || [];
+    const allLayersRaw = existingJson[layerType];
+    const allLayers = Array.isArray(allLayersRaw) ? allLayersRaw : [];
 
     if (intent === "update") {
       const baseName = displayNames[layerType] || layerType;
