@@ -49,29 +49,49 @@ function extractJson(text) {
   return match ? match[0] : "{}";
 }
 
-// --- Normalize JSON: convert array-of-objects into object-of-arrays ---
+// --- Normalize JSON: supports array-of-objects or object form ---
+// Ensures all known layers exist as arrays.
 function normalizeJson(input) {
+  const possibleLayers = [
+    "FATO",
+    "TLOF",
+    "TAXIWAY",
+    "SHAPE",
+    "MODEL",
+    "VOLUME",
+    "FLIGHTPATH",
+    "FLIGHTPATH_VFR"
+  ];
+
+  let normalized;
+
   if (Array.isArray(input)) {
-    return input.reduce((acc, obj) => {
+    // Merge array-of-objects into a single object
+    normalized = input.reduce((acc, obj) => {
       for (const key in obj) {
-        // If the value is an array → merge into array
         if (Array.isArray(obj[key])) {
           if (!acc[key]) acc[key] = [];
           acc[key] = acc[key].concat(obj[key]);
-        }
-        // If the value is an object → overwrite (not concat)
-        else if (typeof obj[key] === "object" && obj[key] !== null) {
+        } else if (typeof obj[key] === "object" && obj[key] !== null) {
           acc[key] = { ...(acc[key] || {}), ...obj[key] };
-        }
-        // Otherwise just assign (primitive values like strings/numbers)
-        else {
+        } else {
           acc[key] = obj[key];
         }
       }
       return acc;
     }, {});
+  } else {
+    normalized = { ...(input || {}) };
   }
-  return input || {}; // already object form or null
+
+  // ✅ Ensure all possibleLayers are arrays
+  for (const layer of possibleLayers) {
+    if (!Array.isArray(normalized[layer])) {
+      normalized[layer] = [];
+    }
+  }
+
+  return normalized;
 }
 
 // --- Map user message to layer types (plural) ---
@@ -114,7 +134,7 @@ for (const [layerType, keywords] of Object.entries(synonyms)) {
 function detectIntent(msg) {
   msg = msg.toLowerCase();
   if (msg.includes("create") || msg.includes("add") || msg.includes("new") || msg.includes("another") || msg.includes("generate") || msg.includes("insert") || msg.includes("make")) return "create";
-  if (msg.includes("update") || msg.includes("change") || msg.includes("modify") || msg.includes("set") || msg.includes("rotate") || msg.includes("move") || msg.includes("resize") || msg.includes("shift") || msg.includes("adjust") || msg.includes("give")) return "update";
+  if (msg.includes("update") || msg.includes("change") || msg.includes("modify") || msg.includes("set") || msg.includes("rotate") || msg.includes("move") || msg.includes("resize") || msg.includes("shift") || msg.includes("adjust") || msg.includes("position") || msg.includes("park") || msg.includes("give")) return "update";
   return "unknown";
 }
 
@@ -309,7 +329,7 @@ function createDefaultLayer(userMessage, forcedLayerType) {
 
 // --- Merge updates with existing JSON (support update by layerName or ID) ---
 function mergeUpdates(existingJson, data, userMessage, intent) {
-  const updatedJson = { ...existingJson };
+  const updatedJson = normalizeJson(existingJson); // ✅ always safe
   const possibleLayers = ["FATO", "TLOF", "TAXIWAY", "SHAPE", "MODEL", "VOLUME", "FLIGHTPATH", "FLIGHTPATH_VFR"];
 
 // Canonical → default display name
@@ -329,19 +349,16 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
   }
 
   function getNextLayerName(layerType) {
-    const existing = updatedJson[layerType] || [];
+    const existing = updatedJson[layerType];
     let maxId = 0;
 
-    // Try to extract the base name from the first template/default
-    let baseName = "Layer";
+    // Base name from first existing item or display name
+    let baseName = displayNames[layerType] || layerType;
     if (existing.length > 0) {
       const firstName = existing[0].dimensions?.layerName || "";
-      baseName = firstName.replace(/\s*\(\d+\)$/, ""); // strip existing (N)
-    } else {
-      baseName = displayNames[layerType] || layerType;
+      baseName = firstName.replace(/\s*\(\d+\)$/, ""); // strip (N)
     }
 
-    // Find max existing ID for this base name
     existing.forEach(item => {
       const currentName = item.dimensions?.layerName || "";
       const match = currentName.match(new RegExp(`^${baseName}\\s*\\((\\d+)\\)$`, "i"));
@@ -356,11 +373,9 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
 
   for (const key of possibleLayers) {
     if (!data[key]) continue;
-    if (!Array.isArray(updatedJson[key])) updatedJson[key] = [];
 
     data[key].forEach(updateObj => {
       if (intent === "update") {
-        // Update existing layer by name or by ID
         const idx = updatedJson[key].findIndex(l =>
           (l.id && l.id === updateObj.id) ||
           normalizeName(l.dimensions?.layerName) === normalizeName(updateObj.dimensions?.layerName)
@@ -387,7 +402,7 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
         position: updateObj.position || [0, 0],
         isVisible: updateObj.isVisible ?? true,
         dimensions: { ...updateObj.dimensions, layerName: newName },
-        id: updateObj.id || undefined
+        id: updateObj.id || `${key}-${Date.now()}`
       });
     });
   }
@@ -441,7 +456,7 @@ function getRelevantLayers(existingJson, selectedLayers, userMessage, intent) {
 
         return nameMatch || idMatch;
       });
-
+      
       // Only include layers that actually matched
       relevant[layerType] = matched;
     } else if (intent === "create") {
@@ -603,6 +618,11 @@ RULES:
 - For all fields inside JSON layers:
   * Always update them if the user explicitly requests a change.
   * If the requested value is outside allowed options, replace with the nearest valid one and explain in "text".
+- If the user requests a relative movement (e.g., "10cm north", "0.5m east"):
+  * Calculate the absolute coordinates from the existing position.
+  * Convert all distances to meters (1cm = 0.01m).
+  * Update the "position" array in the JSON layer accordingly.
+  * Never leave "position" undefined if a movement is requested.
 - When the user requests **new layers**, create full valid JSON with new layer names.
 - When the user requests **updates**, change only the required fields in the particular layerName.
 - Never return FAA advisory text, long documents, or irrelevant data. Always return valid JSON.`;
