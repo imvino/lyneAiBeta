@@ -430,38 +430,33 @@ function getRelevantLayers(existingJson, selectedLayers, userMessage, intent) {
   for (const layerType of selectedLayers) {
     const allLayersRaw = existingJson[layerType];
     const allLayers = Array.isArray(allLayersRaw) ? allLayersRaw : [];
+    const baseName = displayNames[layerType] || layerType;
 
-    if (intent === "update") {
-      const baseName = displayNames[layerType] || layerType;
+    // Regex to match "BASE 1", "BASE (1)", "BASE1" in the message
+    const regex = new RegExp(`${baseName}\\s*\\(?\\s*(\\d+)\\s*\\)?`, "gi");
 
-      // Regex to match "BASE 1", "BASE (1)", "BASE1" in the message
-      const regex = new RegExp(`${baseName}\\s*\\(?\\s*(\\d+)\\s*\\)?`, "gi");
-
-      // Collect all layer numbers mentioned in message for this type
-      const layerNumbersInMsg = [];
-      let match;
-      while ((match = regex.exec(msgUpper)) !== null) {
-        layerNumbersInMsg.push(match[1]); // e.g., "1", "2"
-      }
-
-      // Filter existing layers that match these numbers OR have matching ID
-      const matched = allLayers.filter(layer => {
-        const layerName = layer.dimensions?.layerName || "";
-        const normName = layerName.toUpperCase().replace(/[\s_]+/g, "").replace(/\(|\)/g, "");
-        const idNorm = layer.id ? layer.id.toUpperCase() : "";
-
-        // Match if either numbered name matches OR layer ID appears in message
-        const nameMatch = layerNumbersInMsg.some(num => normName === (baseName + num).replace(/[\s_]+/g, ""));
-        const idMatch = idNorm && msgUpper.includes(idNorm);
-
-        return nameMatch || idMatch;
-      });
-      
-      // Only include layers that actually matched
-      relevant[layerType] = matched;
-    } else if (intent === "create") {
-      relevant[layerType] = [];
+    // Collect all layer numbers mentioned in message for this type
+    const layerNumbersInMsg = [];
+    let match;
+    while ((match = regex.exec(msgUpper)) !== null) {
+      layerNumbersInMsg.push(match[1]); // e.g., "1", "2"
     }
+
+    // Filter existing layers that match these numbers OR have matching ID
+    const matched = allLayers.filter(layer => {
+      const layerName = layer.dimensions?.layerName || "";
+      const normName = layerName.toUpperCase().replace(/[\s_]+/g, "").replace(/\(|\)/g, "");
+      const idNorm = layer.id ? layer.id.toUpperCase() : "";
+
+      // Match if either numbered name matches OR layer ID appears in message
+      const nameMatch = layerNumbersInMsg.some(num => normName === (baseName + num).replace(/[\s_]+/g, ""));
+      const idMatch = idNorm && msgUpper.includes(idNorm);
+
+      return nameMatch || idMatch;
+    });
+
+    // For both update + create → return matches if found
+    relevant[layerType] = matched;
   }
 
   return relevant;
@@ -613,16 +608,23 @@ Additional constraints:
 - Do not merge or combine different requested layer names into a single "layerName".
 - Use the default values from the provided template unless the user explicitly overrides a parameter.
 
-RULES:
-- Aircraft dimensions must remain within published ranges.
-- For all fields inside JSON layers:
-  * Always update them if the user explicitly requests a change.
-  * If the requested value is outside allowed options, replace with the nearest valid one and explain in "text".
+Position Rules:
 - If the user requests a relative movement (e.g., "10cm north", "0.5m east"):
   * Calculate the absolute coordinates from the existing position.
   * Convert all distances to meters (1cm = 0.01m).
   * Update the "position" array in the JSON layer accordingly.
   * Never leave "position" undefined if a movement is requested.
+- If the user specifies “from layer 1 to layer 2” (e.g., taxiway, flightpath), use the positions of both referenced layers as start and end points: 
+  "position": [
+  <position of layer 1>,
+  <position of layer 2>
+  ]
+ 
+RULES:
+- Aircraft dimensions must remain within published ranges.
+- For all fields inside JSON layers:
+  * Always update them if the user explicitly requests a change.
+  * If the requested value is outside allowed options, replace with the nearest valid one and explain in "text".
 - When the user requests **new layers**, create full valid JSON with new layer names.
 - When the user requests **updates**, change only the required fields in the particular layerName.
 - Never return FAA advisory text, long documents, or irrelevant data. Always return valid JSON.`;
