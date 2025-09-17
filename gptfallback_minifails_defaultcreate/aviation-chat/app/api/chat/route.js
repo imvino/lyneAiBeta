@@ -414,6 +414,7 @@ function mergeUpdates(existingJson, data, userMessage, intent) {
 function getRelevantLayers(existingJson, selectedLayers, userMessage, intent) {
   const relevant = {};
   const msgUpper = userMessage.toUpperCase();
+  const errors = [];
 
   // Canonical → display names
   const displayNames = {
@@ -457,6 +458,17 @@ function getRelevantLayers(existingJson, selectedLayers, userMessage, intent) {
 
     // For both update + create → return matches if found
     relevant[layerType] = matched;
+  
+    // ❌ Handle update fallback: no matches found
+    if (intent === "update" && matched.length === 0 && (layerNumbersInMsg.length > 0 || msgUpper.includes("ID"))) {
+     const availableNames = allLayers.map(l => l.dimensions?.layerName || l.id).join(", ") || "None";
+     errors.push(`No such ${baseName} found. Available ${baseName}s: ${availableNames}`);
+    }
+  }
+
+  // If any errors were collected, return them instead of empty matches
+  if (errors.length > 0) {
+    return { error: errors.join(" | ") };
   }
 
   return relevant;
@@ -518,15 +530,17 @@ let selectedLayers = [];
 if (intent === "create") {
   selectedLayers = mapLayersFromUserMessage(userMessage); // keyword-based
 } else if (intent === "update") {
-  // For updates, only consider layer types with at least one matching layer
-  selectedLayers = Object.keys(existingJson).filter(layerType => {
-    const matchedLayers = getRelevantLayers(existingJson, [layerType], userMessage, intent)[layerType];
-    return Array.isArray(matchedLayers) && matchedLayers.length > 0;
-  });
+  // For updates, consider all layers the user actually mentioned
+  selectedLayers = mapLayersFromUserMessage(userMessage);
 }
 
 //Get relevant JSON for these layers
 const relevantJson = getRelevantLayers(existingJson, selectedLayers, userMessage, intent);
+if (relevantJson.error) {
+  // 🚨 Show user the error instead of continuing
+  console.log("⚠️", relevantJson.error);
+  return NextResponse.json({ error: relevantJson.error });
+}
 
 // Load templates for those canonical layer types
 const templates = selectedLayers

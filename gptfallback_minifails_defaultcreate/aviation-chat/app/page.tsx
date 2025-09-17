@@ -32,6 +32,16 @@ export default function ChatUI() {
 
     const data = await response.json();
 
+    if (data.error) {
+    // Show the error as an assistant message
+    setMessages([
+      ...messages,
+      { role: "user", content: question },
+      { role: "assistant", content: `⚠️ ${data.error}` },
+    ]);
+    return;
+  }
+
     setMessages([
       ...messages,
       { role: "user", content: question },
